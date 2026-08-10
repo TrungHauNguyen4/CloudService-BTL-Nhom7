@@ -1,0 +1,573 @@
+# Kế Hoạch Thực Hiện – Website Bán Dịch Vụ Cloud
+
+> **Học phần**: IN4211 – Phát triển phần mềm hướng đối tượng  
+> **Nhóm**: 4 sinh viên | **Deadline**: Buổi 12  
+> **Tech Stack**: ASP.NET Core Web API (.NET 10) + Next.js (App Router) + SQL Server + Docker
+
+---
+
+## Tổng Quan Dự Án
+
+Xây dựng website thương mại dịch vụ cloud (tham khảo vietnix.vn) gồm:
+- **Trang công khai**: Landing page, dịch vụ, bảng giá, blog, đặt dịch vụ
+- **Trang quản trị**: Dashboard admin/editor với JWT auth, CRUD toàn bộ nội dung
+- **Backend API**: Clean Architecture 4 tầng, REST chuẩn, bảo mật đầy đủ
+- **DevOps**: Docker, GitHub Actions CI/CD, có thể deploy lên cloud (điểm cộng)
+
+---
+
+## Phân Công 4 Thành Viên
+
+| Thành viên | Vai trò | Trách nhiệm chính |
+|---|---|---|
+| **TV1** | Team Lead + Backend Core | Domain layer, Application layer, Design Patterns, Repository/UoW |
+| **TV2** | Backend API + Security | WebApi layer, JWT Auth, EF Core, QR Code, Excel Export, Audit Log |
+| **TV3** | Frontend Public | Next.js setup, tất cả trang công khai (Landing, Services, Blog...) |
+| **TV4** | Frontend Admin + DevOps | Admin dashboard, Unit Testing, Docker, GitHub Actions CI/CD |
+
+> **Lưu ý**: Mỗi thành viên phải có ít nhất 2-3 PR đáng kể. Tổng ≥ 10 PR toàn nhóm.
+
+---
+
+## Cấu Trúc Dự Án (Monorepo)
+
+```
+BTL_Ban_dich_vu_cloud/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                    # GitHub Actions CI/CD (TV4)
+├── backend/
+│   └── CloudService.sln
+│   ├── src/
+│   │   ├── CloudService.Domain/       # Tầng 1 – Entities, Interfaces, Enums (TV1)
+│   │   ├── CloudService.Application/  # Tầng 2 – Use Cases, DTOs, Services (TV1)
+│   │   ├── CloudService.Infrastructure/ # Tầng 3 – EF Core, Repositories (TV2)
+│   │   └── CloudService.WebApi/       # Tầng 4 – Controllers, Middleware (TV2)
+│   └── tests/
+│       └── CloudService.UnitTests/    # xUnit + Moq (TV4)
+├── frontend/
+│   ├── public/                        # Static assets
+│   ├── src/
+│   │   ├── app/                       # Next.js App Router
+│   │   │   ├── (public)/              # Layout trang công khai (TV3)
+│   │   │   │   ├── page.tsx           # Trang chủ
+│   │   │   │   ├── gioi-thieu/
+│   │   │   │   ├── dich-vu/
+│   │   │   │   ├── bang-gia/
+│   │   │   │   ├── tin-tuc/
+│   │   │   │   ├── lien-he/
+│   │   │   │   └── doi-tac/
+│   │   │   └── (admin)/               # Layout trang quản trị (TV4)
+│   │   │       ├── login/
+│   │   │       └── dashboard/
+│   │   │           ├── dich-vu/
+│   │   │           ├── tin-tuc/
+│   │   │           ├── don-hang/
+│   │   │           ├── thong-ke/
+│   │   │           └── audit-log/
+│   │   ├── components/                # UI Components dùng chung
+│   │   │   ├── ui/                    # Button, Card, Modal, Table...
+│   │   │   ├── public/                # Header, Footer, HeroBanner...
+│   │   │   └── admin/                 # Sidebar, DataTable, Charts...
+│   │   ├── lib/
+│   │   │   ├── api.ts                 # Axios instance + interceptors
+│   │   │   └── auth.ts                # JWT token management
+│   │   └── types/                     # TypeScript type definitions
+├── docker-compose.yml                 # API + SQL Server (TV4)
+├── Dockerfile                         # Cho API (TV4)
+└── README.md                          # Hướng dẫn chạy dự án
+```
+
+---
+
+## Mô Hình Dữ Liệu (ERD)
+
+```
+AppUser         ──< AuditLog
+AppUser         ──< OrderRequest (Editor quản lý)
+AppUser         ──< AffiliateApplication
+Role            >── AppUser (Many-to-Many)
+
+ServiceCategory ──< ServicePlan
+ServicePlan     ──< PlanPrice (tháng/năm)
+ServicePlan     ──  Promotion (khuyến mãi)
+ServicePlan     ──  QrCode (sinh mã QR)
+
+NewsArticle     (Category: hướng dẫn/khuyến mãi/thông báo)
+OrderRequest    (trạng thái: Mới → Đang xử lý → Hoàn tất/Từ chối)
+AffiliateApplication
+```
+
+### Các Entity chính:
+
+| Entity | Các trường quan trọng |
+|---|---|
+| `ServiceCategory` | Id, Name, Slug, Description, Icon, IsActive |
+| `ServicePlan` | Id, CategoryId, Name, Slug, Specs(CPU/RAM/SSD/BW), Description, QrCodeUrl, IsActive |
+| `PlanPrice` | Id, PlanId, BillingCycle(Monthly/Yearly), Price, OriginalPrice |
+| `Promotion` | Id, PlanId, DiscountPercent, StartDate, EndDate, IsActive |
+| `NewsArticle` | Id, Title, Slug, Content, Category, AuthorId, PublishedAt, IsPublished |
+| `OrderRequest` | Id, CustomerId?, ServiceName, PlanId, BillingCycle, CustomerName, Email, Phone, Status, CreatedAt |
+| `AffiliateApplication` | Id, FullName, Email, Phone, Company, Website, Status |
+| `AppUser` | Id, Username, Email, PasswordHash, Role, CreatedAt |
+| `AuditLog` | Id, UserId, Action, EntityType, EntityId, OldValue, NewValue, Timestamp |
+
+---
+
+## Thiết Kế Backend (Clean Architecture)
+
+### Tầng 1 – Domain (`CloudService.Domain`) — **TV1**
+
+```
+Domain/
+├── Entities/
+│   ├── ServiceCategory.cs
+│   ├── ServicePlan.cs
+│   ├── PlanPrice.cs
+│   ├── Promotion.cs
+│   ├── NewsArticle.cs
+│   ├── OrderRequest.cs
+│   ├── AffiliateApplication.cs
+│   ├── AppUser.cs
+│   └── AuditLog.cs
+├── Enums/
+│   ├── BillingCycle.cs       (Monthly, Yearly)
+│   ├── OrderStatus.cs        (New, Processing, Completed, Rejected)
+│   └── UserRole.cs           (Admin, Editor)
+├── Interfaces/
+│   ├── Repositories/
+│   │   ├── IServicePlanRepository.cs
+│   │   ├── INewsArticleRepository.cs
+│   │   ├── IOrderRequestRepository.cs
+│   │   └── ... (mỗi aggregate 1 interface)
+│   └── IUnitOfWork.cs
+└── Common/
+    ├── BaseEntity.cs         (Id, CreatedAt, UpdatedAt)
+    └── Result.cs             (Result<T> pattern)
+```
+
+### Tầng 2 – Application (`CloudService.Application`) — **TV1**
+
+```
+Application/
+├── Services/
+│   ├── ServicePlanService.cs
+│   ├── NewsArticleService.cs
+│   ├── OrderRequestService.cs
+│   ├── AuthService.cs
+│   └── AuditLogService.cs
+├── DTOs/
+│   ├── ServicePlan/
+│   │   ├── ServicePlanDto.cs
+│   │   ├── CreateServicePlanDto.cs
+│   │   └── UpdateServicePlanDto.cs
+│   ├── NewsArticle/
+│   ├── OrderRequest/
+│   └── Auth/
+│       ├── LoginDto.cs
+│       └── TokenDto.cs
+├── Interfaces/
+│   ├── IServicePlanService.cs
+│   ├── INewsArticleService.cs
+│   ├── IAuthService.cs
+│   └── ...
+├── Validators/              # FluentValidation
+└── Mappings/               # AutoMapper profiles
+```
+
+### Design Patterns áp dụng (bắt buộc ≥ 3):
+
+| Pattern | Áp dụng ở đâu | Tầng |
+|---|---|---|
+| **Repository Pattern** | `IServicePlanRepository`, `INewsArticleRepository`... | Domain + Infrastructure |
+| **Unit of Work** | `IUnitOfWork` – commit transaction một lần | Domain + Infrastructure |
+| **Factory Pattern** | `QrCodeFactory` – tạo QR code cho từng gói | Application |
+| **Observer Pattern** | `AuditLogObserver` – ghi log khi có thay đổi giá | Application |
+| **Singleton** | `JwtService`, `QrCodeService` – DI Singleton lifetime | Infrastructure |
+
+### Tầng 3 – Infrastructure (`CloudService.Infrastructure`) — **TV2**
+
+```
+Infrastructure/
+├── Data/
+│   ├── AppDbContext.cs
+│   └── Migrations/
+├── Repositories/
+│   ├── ServicePlanRepository.cs     # EF Core + Dapper (hybrid)
+│   ├── NewsArticleRepository.cs
+│   ├── OrderRequestRepository.cs
+│   └── UnitOfWork.cs
+├── Services/
+│   ├── JwtService.cs
+│   ├── QrCodeService.cs             # QRCoder library
+│   ├── ExcelExportService.cs        # ClosedXML
+│   └── PasswordHashService.cs       # BCrypt.Net
+└── Configurations/                  # EF Fluent API configs
+```
+
+### Tầng 4 – WebApi (`CloudService.WebApi`) — **TV2**
+
+```
+WebApi/
+├── Controllers/
+│   ├── Public/
+│   │   ├── ServiceCategoriesController.cs
+│   │   ├── ServicePlansController.cs
+│   │   ├── NewsArticlesController.cs
+│   │   └── OrderRequestsController.cs
+│   └── Admin/
+│       ├── AuthController.cs
+│       ├── AdminServicePlansController.cs
+│       ├── AdminNewsController.cs
+│       ├── AdminOrdersController.cs
+│       ├── AdminStatsController.cs
+│       └── AuditLogsController.cs
+├── Middleware/
+│   ├── ExceptionMiddleware.cs       # ProblemDetails
+│   └── AuditMiddleware.cs
+├── Extensions/
+│   ├── ServiceCollectionExtensions.cs
+│   └── SwaggerExtensions.cs
+└── Program.cs
+```
+
+### REST API Endpoints chính:
+
+**Public:**
+```
+GET  /api/service-categories
+GET  /api/service-plans?category=vps&page=1&pageSize=10&sort=price
+GET  /api/service-plans/{slug}
+GET  /api/news-articles?category=&search=&page=
+GET  /api/news-articles/{slug}
+GET  /api/promotions/active
+POST /api/order-requests
+POST /api/affiliate-applications
+```
+
+**Admin (yêu cầu JWT):**
+```
+POST   /api/auth/login
+POST   /api/auth/refresh
+POST   /api/auth/change-password
+
+GET/POST/PUT/DELETE /api/admin/service-plans
+GET/POST/PUT/DELETE /api/admin/news-articles
+GET/PUT             /api/admin/orders
+GET                 /api/admin/stats/monthly
+GET                 /api/admin/export/orders     (Excel)
+GET                 /api/admin/audit-logs
+```
+
+---
+
+## Thiết Kế Frontend (Next.js App Router)
+
+### Trang Công Khai — **TV3**
+
+| Route | Nội dung |
+|---|---|
+| `/` | Hero banner, top services, promotions, uptime badge, latest news |
+| `/gioi-thieu` | Lịch sử, datacenter, chứng chỉ ISO, SLA 99.9% |
+| `/dich-vu` | Grid danh mục (VPS/Hosting/Domain/Email/SSL/DDoS) |
+| `/dich-vu/[slug]` | Chi tiết dịch vụ + các gói + bảng giá tháng/năm |
+| `/bang-gia` | Bảng so sánh tất cả gói, toggle tháng/năm, nút đặt hàng |
+| `/tin-tuc` | Danh sách + phân trang + tìm kiếm + lọc category |
+| `/tin-tuc/[slug]` | Chi tiết bài viết |
+| `/lien-he` | Form đặt dịch vụ (chọn gói, chu kỳ, thông tin KH) |
+| `/doi-tac` | Thông tin chính sách affiliate + form đăng ký |
+| `/khach-hang` | Testimonials + logo KH + mã QR từng gói |
+
+### Trang Quản Trị — **TV4**
+
+| Route | Chức năng | Role |
+|---|---|---|
+| `/admin/login` | Đăng nhập JWT | Tất cả |
+| `/admin/dashboard` | Tổng quan + biểu đồ | Admin |
+| `/admin/dich-vu` | CRUD gói dịch vụ + bảng giá | Admin |
+| `/admin/tin-tuc` | CRUD bài viết (rich text editor) | Admin, Editor |
+| `/admin/don-hang` | Quản lý đơn, đổi trạng thái | Admin, Editor |
+| `/admin/affiliate` | Quản lý đăng ký affiliate | Admin, Editor |
+| `/admin/thong-ke` | Biểu đồ thống kê (Chart.js/Recharts) | Admin |
+| `/admin/audit-log` | Lịch sử thao tác | Admin |
+
+---
+
+## Lộ Trình Thực Hiện (Timeline)
+
+### Giai đoạn 1 – Khởi tạo & Core (Ngày 1–3)
+
+| Task | TV | PR |
+|---|---|---|
+| Tạo GitHub repo, cấu trúc monorepo, bảo vệ branch main | TV1 | PR #1 |
+| Khởi tạo .NET solution, 4 project Clean Architecture | TV1 | PR #2 |
+| Thiết kế Domain entities, enums, interfaces | TV1 | PR #3 |
+| Khởi tạo Next.js (App Router, TypeScript, Tailwind) | TV3 | PR #4 |
+| Tạo GitHub Actions CI workflow cơ bản | TV4 | PR #5 |
+
+### Giai đoạn 2 – Backend Core (Ngày 4–7)
+
+| Task | TV | PR |
+|---|---|---|
+| Application layer: DTOs, Services, Interfaces, AutoMapper | TV1 | PR #6 |
+| Infrastructure: AppDbContext, EF Migrations, Repositories | TV2 | PR #7 |
+| JWT Auth: Login, RefreshToken, ChangePassword | TV2 | PR #8 |
+| QR Code generation service (QRCoder) | TV2 | PR #9 |
+| Controllers: Public APIs (ServicePlans, News, Orders) | TV2 | PR #10 |
+
+### Giai đoạn 3 – Frontend Public + Admin (Ngày 7–10)
+
+| Task | TV | PR |
+|---|---|---|
+| Layout chung: Header, Footer, Design System | TV3 | PR #11 |
+| Trang chủ (Hero, Services, Promotions) | TV3 | PR #12 |
+| Trang dịch vụ, bảng giá, trang liên hệ | TV3 | PR #13 |
+| Trang tin tức (list + detail + phân trang) | TV3 | PR #14 |
+| Admin Layout + Sidebar + Auth flow | TV4 | PR #15 |
+
+### Giai đoạn 4 – Admin Dashboard + Testing (Ngày 10–13)
+
+| Task | TV | PR |
+|---|---|---|
+| Admin CRUD gói dịch vụ + bảng giá | TV4 | PR #16 |
+| Admin quản lý đơn hàng + đổi trạng thái | TV4 | PR #17 |
+| Biểu đồ thống kê + Export Excel | TV2 | PR #18 |
+| Unit Tests: ≥15 test cases (Domain + Application) | TV4 | PR #19 |
+| Audit Log middleware + UI | TV2 | PR #20 |
+
+### Giai đoạn 5 – Hoàn thiện & Deploy (Ngày 13–15)
+
+| Task | TV | PR |
+|---|---|---|
+| Dockerfile + docker-compose.yml (API + SQL Server) | TV4 | PR #21 |
+| Kiểm thử end-to-end, fix bug | Tất cả | PR #22 |
+| Serilog logging + deploy lên Azure/VPS (điểm cộng) | TV4 | PR #23 |
+| README hoàn chỉnh + tài khoản demo | TV1 | PR #24 |
+
+---
+
+## Chi Tiết Phân Công Kỹ Thuật
+
+### TV1 – Team Lead + Backend Core
+
+**Phụ trách:**
+- [ ] Tạo và quản lý GitHub repo, thiết lập branch protection rules
+- [ ] Tạo .NET solution với 4 project (Domain, Application, Infrastructure, WebApi)
+- [ ] Viết tất cả Domain entities, enums, base classes
+- [ ] Viết Application layer: service interfaces, DTOs, AutoMapper profiles
+- [ ] Implement Repository Pattern + Unit of Work interfaces
+- [ ] Viết báo cáo phần kiến trúc, ERD, Design Patterns
+- [ ] Tổng hợp README, slides thuyết trình
+
+**Deliverables:**
+- `CloudService.Domain` project hoàn chỉnh
+- `CloudService.Application` project hoàn chỉnh (interfaces + services)
+- ERD diagram, kiến trúc diagram cho báo cáo
+
+---
+
+### TV2 – Backend API + Security
+
+**Phụ trách:**
+- [ ] `AppDbContext` + EF Core Fluent API configurations
+- [ ] Database migrations + seed data (gói dịch vụ mẫu, tài khoản demo)
+- [ ] Triển khai tất cả Repository implementations (EF Core + Dapper hybrid)
+- [ ] `JwtService`: generate access token + refresh token
+- [ ] `PasswordHashService`: BCrypt hashing
+- [ ] `QrCodeService`: sinh QR code PNG lưu file/base64
+- [ ] `ExcelExportService`: ClosedXML xuất danh sách đơn hàng
+- [ ] Tất cả Controllers (Public + Admin)
+- [ ] `ExceptionMiddleware` với ProblemDetails
+- [ ] `AuditMiddleware` + `AuditLogService`
+- [ ] Swagger/OpenAPI với JWT auth support
+- [ ] Biểu đồ thống kê: số đơn theo tháng, gói phổ biến
+
+**Deliverables:**
+- `CloudService.Infrastructure` + `CloudService.WebApi` hoàn chỉnh
+- Swagger UI chạy được với đầy đủ endpoint
+- Seed data: 3 danh mục, 10+ gói dịch vụ, 2 tài khoản (admin/editor)
+
+---
+
+### TV3 – Frontend Public
+
+**Phụ trách:**
+- [ ] Khởi tạo Next.js 14+ (App Router, TypeScript)
+- [ ] Thiết lập Axios instance với interceptors
+- [ ] Design system: màu sắc, typography, component library (UI cơ bản)
+- [ ] Layout chung: Header (responsive nav), Footer
+- [ ] **Trang chủ**: Hero animation, service cards, promotion countdown, testimonials
+- [ ] **Trang Giới thiệu**: Timeline lịch sử, datacenter cards, uptime badge
+- [ ] **Trang Dịch vụ**: Grid danh mục + trang chi tiết từng dịch vụ
+- [ ] **Trang Bảng giá**: Toggle tháng/năm, so sánh gói, nút đặt hàng
+- [ ] **Trang Tin tức**: List + phân trang + search + filter + detail
+- [ ] **Trang Liên hệ/Đặt dịch vụ**: Multi-step form
+- [ ] **Trang Đối tác**: Affiliate info + form đăng ký
+- [ ] **Trang Khách hàng**: Testimonials + QR code display
+- [ ] Responsive hoàn toàn (mobile-first)
+- [ ] SEO: metadata, Open Graph cho mỗi trang
+
+**Deliverables:**
+- Toàn bộ 8 trang công khai chạy được
+- Kết nối API thực từ backend
+
+---
+
+### TV4 – Frontend Admin + DevOps + Testing
+
+**Phụ trách:**
+- [ ] Admin layout: Sidebar, Header, Auth guard (kiểm tra JWT)
+- [ ] Trang Login: form đăng nhập + lưu token vào cookie/localStorage
+- [ ] **Dashboard**: Cards thống kê + biểu đồ (Recharts)
+- [ ] **CRUD Gói dịch vụ**: DataTable + Modal form + upload ảnh + QR display
+- [ ] **CRUD Tin tức**: Tích hợp rich text editor (TipTap hoặc React-Quill)
+- [ ] **Quản lý đơn hàng**: DataTable + đổi trạng thái + filter + export Excel
+- [ ] **Audit Log**: DataTable + filter theo user/thời gian
+- [ ] Tích hợp refresh token flow
+- [ ] **Unit Tests**: 15+ test cases cho Domain/Application layer (xUnit + Moq)
+- [ ] `Dockerfile` cho API (multi-stage build)
+- [ ] `docker-compose.yml` (API + SQL Server + volume)
+- [ ] **GitHub Actions** `ci.yml`: build + test khi push/PR
+- [ ] Serilog logging configuration (file + console)
+- [ ] Deploy lên Azure App Service + Azure SQL (điểm cộng)
+
+**Deliverables:**
+- Admin dashboard hoàn chỉnh với role-based access
+- ≥15 unit tests với coverage report
+- `docker compose up` chạy được từ máy bất kỳ
+- GitHub Actions pipeline màu xanh
+
+---
+
+## Yêu Cầu Unit Tests (≥ 15 cases) — TV4
+
+```csharp
+// ServicePlanService Tests
+[Fact] GetAllPlans_ShouldReturnPaginatedResult()
+[Fact] GetPlanBySlug_WhenNotFound_ShouldReturnNull()
+[Fact] CreatePlan_WithValidData_ShouldSucceed()
+[Fact] CreatePlan_WithDuplicateSlug_ShouldFail()
+[Fact] UpdatePlan_ShouldCallRepositoryUpdate()
+[Fact] DeletePlan_ShouldSetIsActiveToFalse()
+
+// OrderRequestService Tests
+[Fact] CreateOrder_WithValidData_ShouldSaveToDb()
+[Fact] UpdateOrderStatus_Admin_ShouldChangeStatus()
+[Fact] UpdateOrderStatus_NonAdmin_ShouldThrowUnauthorized()
+
+// AuthService Tests
+[Fact] Login_WithValidCredentials_ShouldReturnToken()
+[Fact] Login_WithWrongPassword_ShouldReturnNull()
+[Fact] RefreshToken_WithExpiredToken_ShouldFail()
+[Fact] ChangePassword_ShouldHashNewPassword()
+
+// PromotionService Tests
+[Fact] GetActivePromotions_ShouldReturnOnlyNonExpired()
+[Fact] CreatePromotion_WithEndDateBeforeStart_ShouldFail()
+[Fact] ApplyPromotion_ShouldCalculateCorrectDiscount()
+```
+
+---
+
+## Cấu Hình Docker
+
+```yaml
+# docker-compose.yml
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "CloudService@123"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
+  api:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      ConnectionStrings__Default: "Server=sqlserver;Database=CloudServiceDb;..."
+      Jwt__Secret: "your-super-secret-key"
+    depends_on:
+      - sqlserver
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: "http://api:8080"
+
+volumes:
+  sqlserver_data:
+```
+
+---
+
+## GitHub Actions CI/CD
+
+```yaml
+# .github/workflows/ci.yml
+on: [push, pull_request]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build Backend
+        run: dotnet build backend/CloudService.sln -c Release
+      - name: Run Unit Tests
+        run: dotnet test backend/tests/CloudService.UnitTests --collect:"XPlat Code Coverage"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+      - name: Build Frontend
+        run: cd frontend && npm ci && npm run build
+```
+
+---
+
+## Checklist Điểm Số
+
+| Tiêu chí | Điểm | Phụ trách |
+|---|---|---|
+| Clean Architecture + SOLID + Design Patterns | 20 | TV1 |
+| Backend API đầy đủ, REST chuẩn, ORM | 20 | TV1 + TV2 |
+| Frontend đầy đủ, responsive | 15 | TV3 + TV4 |
+| Bảo mật: JWT + role + hash + QR | 10 | TV2 |
+| Unit Testing ≥15 tests + coverage | 10 | TV4 |
+| Git teamwork + CI/CD + Docker | 10 | TV4 |
+| Báo cáo + demo | 10 | TV1 (tổng hợp) |
+| Vấn đáp | 5 | Tất cả |
+| **Deploy cloud (điểm cộng)** | **+5** | TV4 |
+
+---
+
+## Tài Khoản Demo (Seed Data)
+
+| Role | Username | Password |
+|---|---|---|
+| Admin | `admin@cloudvn.vn` | `Admin@123` |
+| Editor | `editor@cloudvn.vn` | `Editor@123` |
+
+---
+
+## Lưu Ý Quan Trọng
+
+> [!WARNING]
+> `docker compose up` không chạy được = **-10 điểm**. Phải test trên máy sạch trước khi nộp.
+
+> [!CAUTION]
+> Thành viên không có commit/PR đáng kể = **-50% điểm cá nhân**. Mỗi TV phải có ít nhất 2-3 PR thực chất.
+
+> [!IMPORTANT]
+> **Yêu cầu ≥ 10 PR toàn nhóm** – plan đã dự kiến 24 PR. Mỗi PR phải qua review ít nhất 1 thành viên khác trước khi merge.
+
+> [!TIP]
+> Deploy lên Azure App Service + Azure SQL (hoặc VPS bất kỳ) để lấy **+5 điểm cộng**. TV4 chủ trì, cả nhóm hỗ trợ.
