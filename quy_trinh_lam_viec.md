@@ -1,8 +1,3 @@
-# 📘 Sổ Tay Làm Việc Nhóm (Dành cho mọi thành viên)
-
-Chào mừng bạn tham gia vào dự án **CloudService**! Tài liệu này là **cuốn cẩm nang bắt buộc phải đọc** trước khi bạn viết bất kỳ dòng code nào. Nó quy định cách chúng ta phối hợp trên Git và cách cài đặt dự án.
-
----
 
 ## 🚀 1. Lần Đầu Tiên Tham Gia (Clone & Setup)
 
