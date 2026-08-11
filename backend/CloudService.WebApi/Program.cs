@@ -1,41 +1,157 @@
+using System.Text;
+using CloudService.Application.Interfaces;
+using CloudService.Application.Services;
+using CloudService.Domain.Interfaces;
+using CloudService.Infrastructure.Data;
+using CloudService.Infrastructure.Repositories;
+using CloudService.Infrastructure.Services;
+using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using CloudService.WebApi.Middleware;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// ==================== DATABASE ====================
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("Default")));
+
+// ==================== REPOSITORIES ====================
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// ==================== APPLICATION SERVICES ====================
+
+builder.Services.AddScoped<IServicePlanService, ServicePlanService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<INewsArticleService, NewsArticleService>();
+builder.Services.AddScoped<IAffiliateService, AffiliateService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// ==================== INFRASTRUCTURE SERVICES ====================
+
+builder.Services.AddSingleton<PasswordHashService>();
+builder.Services.AddSingleton<JwtService>();
+builder.Services.AddSingleton<QrCodeService>();
+builder.Services.AddSingleton<ExcelExportService>();
+
+// ==================== AUTOMAPPER ====================
+
+builder.Services.AddAutoMapper(
+    cfg => { },
+    typeof(CloudService.Application.Mappings.ServicePlanProfile).Assembly);
+
+// ==================== FLUENT VALIDATION ====================
+
+builder.Services.AddValidatorsFromAssemblyContaining
+    <CloudService.Application.Validators.CreateServicePlanDtoValidator>();
+
+// ==================== JWT AUTHENTICATION ====================
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(
+                    builder.Configuration["Jwt:Secret"]!))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// ==================== CONTROLLERS + SWAGGER ====================
+
+builder.Services.AddControllers();
+
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc(
+        "v1",
+        new OpenApiInfo
+        {
+            Title = "CloudService API",
+            Version = "v1"
+        });
+
+    c.AddSecurityDefinition(
+        "Bearer",
+        new OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Type = SecuritySchemeType.ApiKey,
+            Scheme = "Bearer",
+            BearerFormat = "JWT",
+            In = ParameterLocation.Header,
+            Description = "Nhập token: Bearer {token}"
+        });
+
+    c.AddSecurityRequirement(
+        new OpenApiSecurityRequirement
+        {
+            {
+                new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                Array.Empty<string>()
+            }
+        });
+});
+
+// ==================== CORS ====================
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+// ==================== BUILD APP ====================
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ==================== MIDDLEWARE ====================
+app.UseMiddleware<ExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.UseAuthentication();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.UseAuthorization();
+
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
