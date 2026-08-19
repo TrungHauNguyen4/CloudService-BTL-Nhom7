@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # 1. Vận hành Cơ sở dữ liệu SQL Server 2022
+  sqldb:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cloudservice_db
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=CloudService@2026!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  # 2. Vận hành Backend API (.NET 9)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cloudservice_api
+    depends_on:
+      - sqldb
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Tự động trỏ chuỗi kết nối Database sang container sqldb ở trên
+      - ConnectionStrings__Default=Server=sqldb;Database=CloudServiceDb;User=sa;Password=CloudService@2026!;TrustServerCertificate=True
+
+volumes:
+  sql_data: # Khai báo ổ cứng ảo để lưu dữ liệu SQL, tránh mất data khi tắt Docker

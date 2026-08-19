@@ -1,0 +1,32 @@
+name: .NET Backend CI
+
+on:
+  push:
+    branches: [ "develop", "main" ]
+  pull_request:
+    branches: [ "develop", "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout mã nguồn
+      uses: actions/checkout@v4
+      
+    - name: Cài đặt môi trường .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Khôi phục thư viện API (Restore)
+      run: dotnet restore backend/CloudService.WebApi/CloudService.WebApi.csproj
+      
+    - name: Khôi phục thư viện Unit Test
+      run: dotnet restore backend/CloudService.UnitTests/CloudService.UnitTests.csproj
+      
+    - name: Biên dịch mã nguồn (Build)
+      run: dotnet build backend/CloudService.WebApi/CloudService.WebApi.csproj --no-restore -c Release
+      
+    - name: Chạy 16 bài Unit Tests
+      run: dotnet test backend/CloudService.UnitTests/CloudService.UnitTests.csproj --no-restore --verbosity normal
