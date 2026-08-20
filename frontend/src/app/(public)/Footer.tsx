@@ -29,7 +29,7 @@ export default function Footer() {
           <ul className="space-y-3 text-sm text-gray-400">
             <li>Email: support@cloudservice.vn</li>
             <li>Hotline: 1900 1234</li>
-            <li>Địa chỉ: Đà Nẵng, Việt Nam</li>
+            <li>Địa chỉ: Sinh Viên Đại Học Đồng Tháp</li>
           </ul>
         </div>
       </div>
