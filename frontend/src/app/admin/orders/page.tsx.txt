@@ -1,0 +1,133 @@
+'use client';
+
+import { useState } from 'react';
+import { Download, Search } from 'lucide-react';
+import axios from 'axios';
+import { saveAs } from 'file-saver';
+
+interface Order {
+  id: number;
+  customerName: string;
+  email: string;
+  plan: string;
+  amount: number;
+  status: 'Pending' | 'Completed' | 'Cancelled';
+  date: string;
+}
+
+const mockOrders: Order[] = [
+  { id: 1001, customerName: 'Nguyễn Văn A', email: 'vana@gmail.com', plan: 'Pro', amount: 299000, status: 'Completed', date: '2026-08-15' },
+  { id: 1002, customerName: 'Trần Thị B', email: 'thib@gmail.com', plan: 'Basic', amount: 99000, status: 'Pending', date: '2026-08-19' },
+  { id: 1003, customerName: 'Lê Văn C', email: 'vanc@gmail.com', plan: 'Enterprise', amount: 999000, status: 'Completed', date: '2026-08-20' },
+];
+
+export default function OrdersPage() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const apiClient = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
+  });
+
+  const handleExportExcel = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.get('/admin/export/orders', {
+        responseType: 'blob'
+      });
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      saveAs(blob, `DanhSachDonHang_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } catch (error) {
+      alert("Lỗi khi tải file Excel! Vui lòng thử lại sau.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredOrders = mockOrders.filter(order =>
+    order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    order.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'Completed':
+        return 'bg-emerald-100 text-emerald-700';
+      case 'Pending':
+        return 'bg-amber-100 text-amber-700';
+      case 'Cancelled':
+        return 'bg-rose-100 text-rose-700';
+      default:
+        return 'bg-slate-100 text-slate-700';
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-slate-800">Quản Lý Đơn Hàng</h1>
+      </div>
+
+      {/* Search & Export */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex-1 relative">
+          <Search size={18} className="absolute left-3 top-3 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm khách hàng hoặc email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <button
+          onClick={handleExportExcel}
+          disabled={loading}
+          className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded-lg font-semibold shadow transition-colors flex items-center gap-2"
+        >
+          <Download size={18} />
+          {loading ? 'Đang tải...' : 'Xuất Excel'}
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">ID</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">Khách Hàng</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">Email</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">Gói</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">Số Tiền</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">Trạng Thái</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">Ngày</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredOrders.map((order) => (
+              <tr key={order.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
+                <td className="px-6 py-4 text-sm font-bold text-slate-900">#{order.id}</td>
+                <td className="px-6 py-4 text-sm text-slate-700">{order.customerName}</td>
+                <td className="px-6 py-4 text-sm text-slate-600">{order.email}</td>
+                <td className="px-6 py-4 text-sm text-slate-700">{order.plan}</td>
+                <td className="px-6 py-4 text-sm font-semibold text-slate-900">
+                  {order.amount.toLocaleString('vi-VN')}₫
+                </td>
+                <td className="px-6 py-4 text-sm">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusBadgeColor(order.status)}`}>
+                    {order.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-slate-600">{order.date}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
