@@ -23,7 +23,7 @@ export default function LoginPage() {
       if (response.data.token) {
         // Save token to cookie (expires in 1 day)
         Cookies.set("token", response.data.token, { expires: 1 });
-        router.push("/dashboard");
+        router.push("/admin/dashboard");
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại kết nối Backend.");

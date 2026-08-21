@@ -26,14 +26,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
         
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          <NavItem href="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
-          <NavItem href="/services" icon={<Server size={20} />} label="Gói Cloud" />
-          <NavItem href="/orders" icon={<ShoppingCart size={20} />} label="Đơn Hàng" />
-          <NavItem href="/affiliates" icon={<Users size={20} />} label="Đối Tác (Affiliate)" />
+          <NavItem href="/admin/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
+          <NavItem href="/admin/services" icon={<Server size={20} />} label="Gói Cloud" />
+          <NavItem href="/admin/orders" icon={<ShoppingCart size={20} />} label="Đơn Hàng" />
+          <NavItem href="/admin/affiliates" icon={<Users size={20} />} label="Đối Tác (Affiliate)" />
         </nav>
         
         <div className="p-4 border-t border-border shrink-0">
-          <NavItem href="/settings" icon={<Settings size={20} />} label="Cài Đặt" />
+          <NavItem href="/admin/settings" icon={<Settings size={20} />} label="Cài Đặt" />
         </div>
       </aside>
 
