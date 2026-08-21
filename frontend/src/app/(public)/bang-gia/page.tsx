@@ -1,0 +1,125 @@
+import Link from 'next/link';
+
+export default function PricingPage() {
+  // Đưa dữ liệu vào mảng để dễ dàng thêm gói, đổi giá hoặc làm tính năng "Thanh toán hàng năm" sau này
+  const pricingPlans = [
+    {
+      id: 'basic',
+      name: 'Gói Cơ Bản',
+      desc: 'Phù hợp cho cá nhân, website tĩnh hoặc blog nhỏ mới bắt đầu.',
+      price: '150.000đ',
+      cpu: '1 vCPU',
+      ram: '2GB RAM',
+      storage: '40GB NVMe SSD',
+      features: ['Băng thông 1TB', '1 IPv4 Tĩnh', 'Hỗ trợ ticket 24/7', 'Tự động Backup tuần'],
+      isPopular: false,
+    },
+    {
+      id: 'pro',
+      name: 'Gói Chuyên Nghiệp',
+      desc: 'Giải pháp hoàn hảo cho doanh nghiệp vừa và nhỏ, ứng dụng SaaS.',
+      price: '350.000đ',
+      cpu: '2 vCPU',
+      ram: '4GB RAM',
+      storage: '80GB NVMe SSD',
+      features: ['Băng thông Không giới hạn', '1 IPv4 Tĩnh', 'Hỗ trợ ưu tiên (Phone/Chat)', 'Tự động Backup ngày', 'Bảo mật Anti-DDoS Cơ bản'],
+      isPopular: true,
+    },
+    {
+      id: 'enterprise',
+      name: 'Gói Doanh Nghiệp',
+      desc: 'Hiệu năng tối đa cho hệ thống lớn, thương mại điện tử có traffic cao.',
+      price: '800.000đ',
+      cpu: '4 vCPU',
+      ram: '8GB RAM',
+      storage: '160GB NVMe SSD',
+      features: ['Băng thông Không giới hạn', '2 IPv4 Tĩnh', 'Quản trị viên riêng (Account Manager)', 'Tự động Backup mỗi 4h', 'Bảo mật Anti-DDoS Chuyên sâu', 'Cam kết Uptime 99.99% SLA'],
+      isPopular: false,
+    }
+  ];
+
+  return (
+    <main className="min-h-screen bg-slate-50 pt-24 pb-32 px-6 sm:px-8 font-sans selection:bg-blue-500 selection:text-white">
+      
+      {/* HEADER TITTLE */}
+      <div className="max-w-3xl mx-auto text-center mb-20">
+        <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">
+          Bảng Giá <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Minh Bạch</span>
+        </h1>
+        <p className="text-lg md:text-xl text-slate-500 leading-relaxed font-light">
+          Không phí ẩn. Dễ dàng nâng cấp hoặc hạ cấp bất cứ lúc nào. Chọn gói cấu hình phù hợp với quy mô dự án của bạn.
+        </p>
+      </div>
+
+      {/* PRICING GRID */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+        {pricingPlans.map((plan) => (
+          <div 
+            key={plan.id} 
+            className={`relative bg-white rounded-[2.5rem] p-8 md:p-10 transition-all duration-500 flex flex-col h-full ${
+              plan.isPopular 
+                ? 'border-2 border-blue-500 shadow-[0_20px_50px_rgba(37,99,235,0.15)] transform lg:-translate-y-4 z-10' 
+                : 'border border-slate-100 shadow-sm hover:shadow-xl hover:border-slate-200'
+            }`}
+          >
+            {/* Badge Nổi Bật */}
+            {plan.isPopular && (
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold uppercase tracking-wider py-1.5 px-4 rounded-full shadow-lg">
+                Phổ biến nhất
+              </div>
+            )}
+
+            <div className="mb-8">
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">{plan.name}</h3>
+              <p className="text-slate-500 text-sm h-10">{plan.desc}</p>
+            </div>
+
+            <div className="mb-8 flex items-baseline gap-2 border-b border-slate-100 pb-8">
+              <span className="text-5xl font-black text-slate-900">{plan.price}</span>
+              <span className="text-slate-500 font-medium">/tháng</span>
+            </div>
+
+            {/* Thông số cốt lõi */}
+            <div className="grid grid-cols-3 gap-2 mb-8 text-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+              <div>
+                <p className="text-slate-900 font-bold">{plan.cpu}</p>
+              </div>
+              <div className="border-x border-slate-200">
+                <p className="text-slate-900 font-bold">{plan.ram}</p>
+              </div>
+              <div>
+                <p className="text-slate-900 font-bold">{plan.storage}</p>
+              </div>
+            </div>
+
+            {/* Danh sách tính năng */}
+            <ul className="space-y-4 mb-10 flex-grow">
+              {plan.features.map((feature, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <div className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-slate-600 text-sm font-medium">{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* Nút Call to Action */}
+            <Link 
+              href={`/thanh-toan?plan=${plan.id}`} 
+              className={`mt-auto w-full block text-center py-4 rounded-2xl font-bold transition-all duration-300 ${
+                plan.isPopular 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/30' 
+                  : 'bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-900 hover:text-white hover:border-slate-900'
+              }`}
+            >
+              Triển khai ngay
+            </Link>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}
