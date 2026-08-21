@@ -1,4 +1,43 @@
+'use client';
+
+import { useState } from 'react';
+import apiClient from '@/lib/axios';
+
 export default function ContactPage() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('Tư vấn dịch vụ Cloud Server');
+  const [content, setContent] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
+    setSuccess(false);
+
+    try {
+      await apiClient.post('/public/orders', {
+        customerName: name,
+        email: email,
+        phone: '000000000',
+        serviceName: subject,
+        planId: '00000000-0000-0000-0000-000000000000', // Placeholder
+        billingCycle: 'Monthly',
+      });
+      setSuccess(true);
+      setName('');
+      setEmail('');
+      setContent('');
+    } catch (err) {
+      setError('Gửi tin nhắn thất bại. Vui lòng thử lại sau.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Quản lý thông tin liên hệ bằng mảng giúp code gọn và dễ bảo trì
   const contactDetails = [
     {
@@ -75,12 +114,29 @@ export default function ContactPage() {
         <div className="order-1 lg:order-2 bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100">
           <h2 className="text-2xl font-bold text-slate-900 mb-8">Gửi Tin Nhắn</h2>
           
-          <form className="space-y-6">
+          {success && (
+            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl flex items-center gap-3">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              <span>Tin nhắn của bạn đã được gửi thành công! Chúng tôi sẽ liên hệ lại sớm nhất.</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl flex items-center gap-3">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="block text-sm font-bold text-slate-700">Họ và tên <span className="text-rose-500">*</span></label>
                 <input 
-                  type="text" 
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-slate-700" 
                   placeholder="Nhập tên của bạn" 
                 />
@@ -88,7 +144,10 @@ export default function ContactPage() {
               <div className="space-y-2">
                 <label className="block text-sm font-bold text-slate-700">Email <span className="text-rose-500">*</span></label>
                 <input 
-                  type="email" 
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-slate-700" 
                   placeholder="name@company.com" 
                 />
@@ -97,7 +156,11 @@ export default function ContactPage() {
 
             <div className="space-y-2">
               <label className="block text-sm font-bold text-slate-700">Chủ đề</label>
-              <select className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-slate-700 appearance-none cursor-pointer">
+              <select 
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-slate-700 appearance-none cursor-pointer"
+              >
                 <option>Tư vấn dịch vụ Cloud Server</option>
                 <option>Hỗ trợ kỹ thuật</option>
                 <option>Vấn đề thanh toán / Hóa đơn</option>
@@ -108,17 +171,21 @@ export default function ContactPage() {
             <div className="space-y-2">
               <label className="block text-sm font-bold text-slate-700">Nội dung <span className="text-rose-500">*</span></label>
               <textarea 
-                rows={5} 
+                rows={5}
+                required
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
                 className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-slate-700 resize-none" 
                 placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải..."
               ></textarea>
             </div>
 
             <button 
-              type="button" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-lg shadow-blue-600/30 transform hover:-translate-y-1"
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-lg shadow-blue-600/30 transform hover:-translate-y-1"
             >
-              Gửi Tin Nhắn Ngay
+              {isSubmitting ? 'Đang gửi...' : 'Gửi Tin Nhắn Ngay'}
             </button>
             
             <p className="text-center text-xs text-slate-400 mt-4">

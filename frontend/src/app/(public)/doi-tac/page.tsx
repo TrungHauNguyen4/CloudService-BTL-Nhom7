@@ -1,6 +1,41 @@
-import Image from 'next/image';
+'use client';
+
+import { useState } from 'react';
+import apiClient from '@/lib/axios';
 
 export default function PartnersPage() {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [website, setWebsite] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [showForm, setShowForm] = useState(false);
+
+  const handleAffiliateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
+    setSuccess(false);
+
+    try {
+      await apiClient.post('/public/affiliates', {
+        fullName, email, phone, website,
+      });
+      setSuccess(true);
+      setFullName('');
+      setEmail('');
+      setPhone('');
+      setWebsite('');
+      setTimeout(() => setShowForm(false), 3000);
+    } catch (err) {
+      setError('Đăng ký thất bại, vui lòng thử lại.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const partners = [
     { name: "TechCorp Global", role: "Đối tác Hạ tầng Cloud", desc: "Cung cấp phần cứng và server tối tân.", bg: "from-blue-500 to-indigo-600" },
     { name: "SecurNet AI", role: "Đối tác Bảo mật", desc: "Hệ thống tường lửa và chống DDoS toàn diện.", bg: "from-purple-500 to-pink-600" },
@@ -66,11 +101,61 @@ export default function PartnersPage() {
           <p className="text-blue-100 max-w-xl mx-auto mb-8">
             Cùng chúng tôi mở rộng hệ sinh thái điện toán đám mây và mang lại giá trị vượt trội cho hàng ngàn doanh nghiệp.
           </p>
-          <button className="bg-white text-blue-700 font-bold px-8 py-3.5 rounded-full shadow-lg hover:bg-gray-100 transition-all transform hover:-translate-y-0.5">
-            Đăng ký hợp tác ngay
-          </button>
+          {!showForm && (
+            <button 
+              onClick={() => setShowForm(true)}
+              className="bg-white text-blue-700 font-bold px-8 py-3.5 rounded-full shadow-lg hover:bg-gray-100 transition-all transform hover:-translate-y-0.5"
+            >
+              Đăng ký hợp tác ngay
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Form đăng ký đối tác (ẩn/hiện) */}
+      {showForm && (
+        <div className="max-w-2xl mx-auto mt-8 bg-white rounded-3xl p-8 shadow-xl border border-gray-100 animate-in fade-in slide-in-from-top-4 duration-500">
+          <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Form Đăng Ký Đối Tác</h3>
+          
+          {success && (
+            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl flex items-center gap-3">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              <span>Đăng ký thành công! Chúng tôi sẽ liên hệ bạn sớm nhất.</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl flex items-center gap-3">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleAffiliateSubmit} className="space-y-4 text-left">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Tên công ty / Cá nhân *</label>
+              <input required value={fullName} onChange={e => setFullName(e.target.value)} type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Email *</label>
+                <input required value={email} onChange={e => setEmail(e.target.value)} type="email" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Số điện thoại *</label>
+                <input required value={phone} onChange={e => setPhone(e.target.value)} type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Website (Tùy chọn)</label>
+              <input value={website} onChange={e => setWebsite(e.target.value)} type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" placeholder="https://" />
+            </div>
+            <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6">
+              {isSubmitting ? 'Đang gửi...' : 'Gửi Đăng Ký'}
+            </button>
+          </form>
+        </div>
+      )}
     </main>
   );
 }

@@ -1,6 +1,11 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 
 export default function PricingPage() {
+  const [isYearly, setIsYearly] = useState(false);
+
   // Đưa dữ liệu vào mảng để dễ dàng thêm gói, đổi giá hoặc làm tính năng "Thanh toán hàng năm" sau này
   const pricingPlans = [
     {
@@ -8,6 +13,7 @@ export default function PricingPage() {
       name: 'Gói Cơ Bản',
       desc: 'Phù hợp cho cá nhân, website tĩnh hoặc blog nhỏ mới bắt đầu.',
       price: '150.000đ',
+      priceYear: '1.500.000đ',
       cpu: '1 vCPU',
       ram: '2GB RAM',
       storage: '40GB NVMe SSD',
@@ -19,6 +25,7 @@ export default function PricingPage() {
       name: 'Gói Chuyên Nghiệp',
       desc: 'Giải pháp hoàn hảo cho doanh nghiệp vừa và nhỏ, ứng dụng SaaS.',
       price: '350.000đ',
+      priceYear: '3.500.000đ',
       cpu: '2 vCPU',
       ram: '4GB RAM',
       storage: '80GB NVMe SSD',
@@ -30,6 +37,7 @@ export default function PricingPage() {
       name: 'Gói Doanh Nghiệp',
       desc: 'Hiệu năng tối đa cho hệ thống lớn, thương mại điện tử có traffic cao.',
       price: '800.000đ',
+      priceYear: '8.000.000đ',
       cpu: '4 vCPU',
       ram: '8GB RAM',
       storage: '160GB NVMe SSD',
@@ -46,9 +54,26 @@ export default function PricingPage() {
         <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">
           Bảng Giá <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Minh Bạch</span>
         </h1>
-        <p className="text-lg md:text-xl text-slate-500 leading-relaxed font-light">
+        <p className="text-lg md:text-xl text-slate-500 leading-relaxed font-light mb-8">
           Không phí ẩn. Dễ dàng nâng cấp hoặc hạ cấp bất cứ lúc nào. Chọn gói cấu hình phù hợp với quy mô dự án của bạn.
         </p>
+
+        {/* TOGGLE THÁNG / NĂM */}
+        <div className="flex items-center justify-center gap-4 mt-8">
+          <span className={`text-sm font-bold ${!isYearly ? 'text-slate-900' : 'text-slate-400'}`}>
+            Thanh toán theo Tháng
+          </span>
+          <button
+            onClick={() => setIsYearly(!isYearly)}
+            className={`relative w-14 h-7 rounded-full transition-colors ${isYearly ? 'bg-blue-600' : 'bg-slate-300'}`}
+          >
+            <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${isYearly ? 'translate-x-7' : 'translate-x-0.5'}`} />
+          </button>
+          <span className={`text-sm font-bold ${isYearly ? 'text-slate-900' : 'text-slate-400'}`}>
+            Thanh toán theo Năm
+            <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">-17%</span>
+          </span>
+        </div>
       </div>
 
       {/* PRICING GRID */}
@@ -75,8 +100,12 @@ export default function PricingPage() {
             </div>
 
             <div className="mb-8 flex items-baseline gap-2 border-b border-slate-100 pb-8">
-              <span className="text-5xl font-black text-slate-900">{plan.price}</span>
-              <span className="text-slate-500 font-medium">/tháng</span>
+              <span className="text-5xl font-black text-slate-900">
+                {isYearly ? plan.priceYear : plan.price}
+              </span>
+              <span className="text-slate-500 font-medium">
+                /{isYearly ? 'năm' : 'tháng'}
+              </span>
             </div>
 
             {/* Thông số cốt lõi */}
