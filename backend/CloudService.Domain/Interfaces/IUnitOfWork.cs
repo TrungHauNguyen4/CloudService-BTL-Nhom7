@@ -7,6 +7,8 @@ public interface IUnitOfWork : IDisposable
     IServicePlanRepository ServicePlans { get; }
     INewsArticleRepository NewsArticles { get; }
     IOrderRequestRepository OrderRequests { get; }
-    IAffiliateApplicationRepository AffiliateApplication { get; } 
+    IAffiliateApplicationRepository AffiliateApplications { get; } 
+    IAppUserRepository AppUsers { get; }
+    IAuditLogRepository AuditLogs { get; }
     Task<int> SaveChangesAsync(); // Lưu tất cả vào DB cùng 1 lúc
 }

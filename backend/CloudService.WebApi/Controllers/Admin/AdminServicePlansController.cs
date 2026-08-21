@@ -31,4 +31,36 @@ public class AdminServicePlansController : ControllerBase
             new { id = plan.Id },
             plan);
     }
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(
+        Guid id,
+        [FromBody] CreateServicePlanDto dto)
+    {
+        var plan = await _planService.UpdateAsync(id, dto);
+
+        if (plan == null)
+        {
+            return NotFound(new
+            {
+                message = "Không tìm thấy gói dịch vụ."
+            });
+        }
+
+        return Ok(plan);
+    }
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var deleted = await _planService.DeleteAsync(id);
+
+        if (!deleted)
+        {
+            return NotFound(new
+            {
+                message = "Không tìm thấy gói dịch vụ."
+            });
+        }
+
+        return NoContent();
+    }
 }

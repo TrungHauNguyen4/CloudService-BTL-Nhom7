@@ -16,10 +16,23 @@ public class AdminOrdersController : ControllerBase
         IOrderService orderService)
         => _orderService = orderService;
 
+    // GET: /api/admin/orders
+    // GET: /api/admin/orders?status=1
+    [HttpGet]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] OrderStatus? status)
+    {
+        var orders = await _orderService.GetAllOrdersAsync(status);
+
+        return Ok(orders);
+    }
+
+    // GET: /api/admin/orders/pending
     [HttpGet("pending")]
     public async Task<IActionResult> GetPending()
         => Ok(await _orderService.GetPendingOrdersAsync());
 
+    // PUT: /api/admin/orders/{id}/status
     [HttpPut("{id:guid}/status")]
     public async Task<IActionResult> UpdateStatus(
         Guid id,

@@ -27,4 +27,28 @@ public class NewsArticleRepository
             .Take(pageSize)
             .Include(a => a.Author)
             .ToListAsync();
+        public async Task<IEnumerable<NewsArticle>> SearchPublishedArticlesAsync(
+            string? search,
+            int page,
+            int pageSize)
+        {
+            var query = _dbSet
+                .Where(a => a.IsPublished)
+                .Include(a => a.Author)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+
+                query = query.Where(a =>
+                    a.Title.Contains(search));
+            }
+
+            return await query
+                .OrderByDescending(a => a.PublishedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
 }
