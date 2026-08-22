@@ -11,7 +11,7 @@ export default async function PublicHomePage() {
 
     let categories = [];
   try {
-    const res = await fetch("http://localhost:5000/api/service-categories", { next: { revalidate: 60 } });
+    const res = await fetch("http://localhost:5023/api/service-categories", { next: { revalidate: 60 } });
     if (res.ok) {
       categories = await res.json();
     }

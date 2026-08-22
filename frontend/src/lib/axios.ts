@@ -2,7 +2,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:5000/api', // Backend port from docker-compose
+  baseURL: 'http://localhost:5023/api', // Backend port from docker-compose
   headers: {
     'Content-Type': 'application/json',
   },

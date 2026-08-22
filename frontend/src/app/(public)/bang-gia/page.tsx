@@ -20,7 +20,7 @@ export default function PricingPage() {
     setLoadingQr(true);
     setQrData(null);
     try {
-      const res = await fetch("http://localhost:5000/api/service-plans/" + planId + "/qr");
+      const res = await fetch("http://localhost:5023/api/service-plans/" + planId + "/qr");
       if (res.ok) {
         const data = await res.json();
         setQrData(data);
@@ -38,7 +38,7 @@ export default function PricingPage() {
   };
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/service-plans")
+    fetch("http://localhost:5023/api/service-plans")
       .then(res => res.json())
       .then(data => {
         // Map data from API to frontend structure

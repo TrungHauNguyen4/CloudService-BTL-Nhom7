@@ -46,7 +46,7 @@ export default function Header() {
 
         {/* Nút Đăng nhập / Đăng ký */}
         <div className="hidden md:flex space-x-5 items-center">
-          <Link href="/dang-nhap" className="text-slate-600 font-bold text-sm hover:text-blue-600 transition-colors">
+          <Link href="/login" className="text-slate-600 font-bold text-sm hover:text-blue-600 transition-colors">
             Đăng nhập
           </Link>
           <Link href="/dang-ky" className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 transition-all transform hover:-translate-y-0.5">
@@ -85,7 +85,7 @@ export default function Header() {
               </Link>
             ))}
             <div className="flex flex-col gap-3 pt-4">
-              <Link href="/dang-nhap" onClick={() => setIsMenuOpen(false)} className="text-center text-slate-600 font-bold py-2">Đăng nhập</Link>
+              <Link href="/login" onClick={() => setIsMenuOpen(false)} className="text-center text-slate-600 font-bold py-2">Đăng nhập</Link>
               <Link href="/dang-ky" onClick={() => setIsMenuOpen(false)} className="text-center bg-blue-600 text-white py-3 rounded-full font-bold">Đăng ký</Link>
             </div>
           </nav>
