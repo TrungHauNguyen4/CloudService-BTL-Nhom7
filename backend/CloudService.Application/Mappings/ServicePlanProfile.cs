@@ -2,6 +2,7 @@
 using AutoMapper;//Sử dụng thư viện AutoMapper
 using CloudService.Application.DTOs;
 using CloudService.Domain.Entities;
+using System.Linq;
 
 namespace CloudService.Application.Mappings;
 
@@ -10,7 +11,11 @@ public class ServicePlanProfile : Profile
     public ServicePlanProfile()
     {
         // Entity -> DTO (Đọc dữ liệu)
-        CreateMap<ServicePlan, ServicePlanDto>();
+        CreateMap<ServicePlan, ServicePlanDto>()
+            .ForMember(dest => dest.MonthlyPrice, opt => opt.MapFrom(src => 
+                src.Prices.FirstOrDefault(p => p.BillingCycle == CloudService.Domain.Enums.BillingCycle.Monthly) != null 
+                ? src.Prices.FirstOrDefault(p => p.BillingCycle == CloudService.Domain.Enums.BillingCycle.Monthly)!.Price 
+                : 0));
         
         // DTO -> Entity (Ghi dữ liệu)
         CreateMap<CreateServicePlanDto, ServicePlan>()

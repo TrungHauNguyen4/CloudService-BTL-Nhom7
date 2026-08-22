@@ -8,4 +8,6 @@ public class ServicePlanDto
     public string Slug { get; set; } = string.Empty;
     public string? Specs { get; set; }
     public bool IsActive { get; set; }
+    public CategoryDto? Category { get; set; }
+    public decimal MonthlyPrice { get; set; }
 }
