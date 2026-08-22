@@ -29,7 +29,7 @@ public class AffiliateServiceTests
         var entity = new AffiliateApplication();
         
         _mockMapper.Setup(m => m.Map<AffiliateApplication>(dto)).Returns(entity);
-        _mockUoW.Setup(u => u.AffiliateApplication.AddAsync(It.IsAny<AffiliateApplication>())).Returns(Task.CompletedTask); // Đã sửa tên Repo
+        _mockUoW.Setup(u => u.AffiliateApplications.AddAsync(It.IsAny<AffiliateApplication>())).Returns(Task.CompletedTask); // Đã sửa tên Repo
 
         var result = await _service.SubmitApplicationAsync(dto);
         
@@ -44,7 +44,7 @@ public class AffiliateServiceTests
         var entity = new AffiliateApplication();
         
         _mockMapper.Setup(m => m.Map<AffiliateApplication>(dto)).Returns(entity);
-        _mockUoW.Setup(u => u.AffiliateApplication.AddAsync(It.IsAny<AffiliateApplication>())).Returns(Task.CompletedTask);
+        _mockUoW.Setup(u => u.AffiliateApplications.AddAsync(It.IsAny<AffiliateApplication>())).Returns(Task.CompletedTask);
 
         await _service.SubmitApplicationAsync(dto);
         

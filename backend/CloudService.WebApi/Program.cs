@@ -32,6 +32,9 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<INewsArticleService, NewsArticleService>();
 builder.Services.AddScoped<IAffiliateService, AffiliateService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAffiliateApplicationService, AffiliateApplicationService>();
+builder.Services.AddScoped<IAdminStatsService, AdminStatsService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
 // ==================== INFRASTRUCTURE SERVICES ====================
 
@@ -70,6 +73,18 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(
                     builder.Configuration["Jwt:Secret"]!))
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine("========== JWT AUTHENTICATION ERROR ==========");
+                Console.WriteLine(context.Exception.Message);
+                Console.WriteLine("==============================================");
+
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -149,6 +164,8 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
+
+app.UseMiddleware<AuditMiddleware>();
 
 app.UseAuthorization();
 
