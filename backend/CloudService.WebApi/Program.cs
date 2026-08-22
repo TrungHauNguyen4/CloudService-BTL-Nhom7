@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using CloudService.Application.Interfaces;
 using CloudService.Application.Services;
 using CloudService.Domain.Interfaces;
@@ -35,6 +35,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAffiliateApplicationService, AffiliateApplicationService>();
 builder.Services.AddScoped<IAdminStatsService, AdminStatsService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IPromotionService, PromotionService>();
 
 // ==================== INFRASTRUCTURE SERVICES ====================
 
@@ -115,7 +116,7 @@ builder.Services.AddSwaggerGen(c =>
             Scheme = "Bearer",
             BearerFormat = "JWT",
             In = ParameterLocation.Header,
-            Description = "Nhập token: Bearer {token}"
+            Description = "Nháº­p token: Bearer {token}"
         });
 
     c.AddSecurityRequirement(

@@ -1,4 +1,4 @@
-//(Pattern Unit of Work): Mục đích: Quản lý transaction. Đảm bảo nếu cập nhật nhiều bảng cùng lúc, nếu lỗi 1 bảng thì rollback toàn bộ (Data Consistency).
+﻿//(Pattern Unit of Work): Mục đích: Quản lý transaction. Đảm bảo nếu cập nhật nhiều bảng cùng lúc, nếu lỗi 1 bảng thì rollback toàn bộ (Data Consistency).
 namespace CloudService.Domain.Interfaces;
 
 public interface IUnitOfWork : IDisposable
@@ -10,5 +10,6 @@ public interface IUnitOfWork : IDisposable
     IAffiliateApplicationRepository AffiliateApplications { get; } 
     IAppUserRepository AppUsers { get; }
     IAuditLogRepository AuditLogs { get; }
+    IPromotionRepository Promotions { get; }
     Task<int> SaveChangesAsync(); // Lưu tất cả vào DB cùng 1 lúc
 }
