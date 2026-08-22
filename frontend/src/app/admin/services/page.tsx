@@ -1,12 +1,33 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, QrCode } from "lucide-react";
 import apiClient from "@/lib/axios";
 
 export default function ServicesPage() {
-  const [services, setServices] = useState<any[]>([]);
+    const [services, setServices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // States cho QR Modal
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [qrData, setQrData] = useState<any>(null);
+  const [loadingQr, setLoadingQr] = useState(false);
+
+  const handleShowQr = async (planId: string) => {
+    setShowQrModal(true);
+    setLoadingQr(true);
+    setQrData(null);
+    try {
+      const response = await apiClient.get('/public/service-plans/' + planId + '/qr');
+      setQrData(response.data);
+    } catch (error) {
+      console.error("Lỗi khi tải mã QR:", error);
+      alert("Không thể tải mã QR");
+      setShowQrModal(false);
+    } finally {
+      setLoadingQr(false);
+    }
+  };
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -83,6 +104,13 @@ export default function ServicesPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end space-x-2">
+                        <button 
+                          onClick={() => handleShowQr(service.id)}
+                          className="p-1.5 text-muted-foreground hover:text-blue-500 transition-colors"
+                          title="Xem QR Thanh Toán"
+                        >
+                          <QrCode className="w-4 h-4" />
+                        </button>
                         <button className="p-1.5 text-muted-foreground hover:text-primary transition-colors">
                           <Edit className="w-4 h-4" />
                         </button>
@@ -98,6 +126,37 @@ export default function ServicesPage() {
           </table>
         </div>
       </div>
+
+      {showQrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-background rounded-xl p-8 max-w-sm w-full shadow-2xl relative border border-border text-center">
+            <button 
+              onClick={() => setShowQrModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <h3 className="text-xl font-bold mb-2">Mã QR Thanh Toán</h3>
+            <p className="text-muted-foreground text-sm mb-6">Đưa mã này cho khách hàng quét để thanh toán trực tiếp.</p>
+            
+            <div className="flex justify-center items-center min-h-[200px] bg-muted/30 rounded-lg p-4">
+              {loadingQr ? (
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              ) : qrData ? (
+                <div>
+                  <img src={qrData.qrImage} alt="QR Code" className="w-48 h-48 mx-auto rounded-lg shadow-sm mb-4 bg-white p-2" />
+                  <p className="font-bold text-primary">{qrData.planName}</p>
+                  <p className="text-lg font-black mt-1">
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(qrData.price)}
+                  </p>
+                </div>
+              ) : (
+                <div className="text-destructive font-medium">Không thể hiển thị mã QR</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

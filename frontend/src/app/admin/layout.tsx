@@ -10,7 +10,8 @@ import {
   Search,
   Newspaper,
   PieChart,
-  History
+  History,
+  Tag
 } from "lucide-react";
 
 export const metadata = {
@@ -34,6 +35,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <NavItem href="/admin/orders" icon={<ShoppingCart size={20} />} label="Đơn Hàng" />
           <NavItem href="/admin/affiliates" icon={<Users size={20} />} label="Đối Tác (Affiliate)" />
           <NavItem href="/admin/news" icon={<Newspaper size={20} />} label="Tin Tức" />
+          <NavItem href="/admin/promotions" icon={<Tag size={20} />} label="Khuyến Mãi" />
           <NavItem href="/admin/analytics" icon={<PieChart size={20} />} label="Thống Kê" />
           <NavItem href="/admin/audit-logs" icon={<History size={20} />} label="Nhật Ký Hệ Thống" />
         </nav>
