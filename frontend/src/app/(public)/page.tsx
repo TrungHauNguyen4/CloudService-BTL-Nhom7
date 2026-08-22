@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-export default function PublicHomePage() {
+export default async function PublicHomePage() {
   // Dữ liệu tĩnh được đưa vào mảng giúp file gọn gàng và siêu dễ bảo trì
   const stats = [
     { label: 'Cam kết Uptime', value: '99.99%', suffix: '' },
@@ -9,26 +9,54 @@ export default function PublicHomePage() {
     { label: 'Băng thông tối đa', value: '10', suffix: ' Gbps' },
   ];
 
-  const services = [
-    {
-      title: 'Cloud Server',
-      desc: 'Máy chủ ảo với vi xử lý thế hệ mới nhất, cấp phát tức thì, toàn quyền quản trị root/administrator.',
-      icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>,
-      color: 'blue'
-    },
-    {
-      title: 'Cloud Storage',
-      desc: 'Lưu trữ Object Storage linh hoạt. Đảm bảo an toàn dữ liệu với cơ chế nhân bản 3 lớp (3-way replica).',
-      icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>,
-      color: 'indigo'
-    },
-    {
-      title: 'Cloud Security',
-      desc: 'Bảo vệ toàn diện với Web Application Firewall (WAF), chống DDoS tự động nhận diện rủi ro.',
-      icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
-      color: 'teal'
+    let categories = [];
+  try {
+    const res = await fetch("http://localhost:5000/api/service-categories", { next: { revalidate: 60 } });
+    if (res.ok) {
+      categories = await res.json();
     }
-  ];
+  } catch (error) {
+    console.error("Failed to fetch categories", error);
+  }
+
+  const getCategoryColor = (slug: string) => {
+    const colors: any = { vps: 'blue', hosting: 'indigo', domain: 'teal' };
+    return colors[slug] || 'blue';
+  };
+
+  const getCategoryIcon = (slug: string) => {
+    if (slug === 'hosting') return <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>;
+    if (slug === 'domain') return <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>;
+    return <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>;
+  };
+
+  const services = categories.length > 0 
+    ? categories.map((c: any) => ({
+        title: c.name,
+        desc: c.description || 'Giải pháp hạ tầng mạnh mẽ',
+        icon: getCategoryIcon(c.slug),
+        color: getCategoryColor(c.slug)
+      }))
+    : [
+        {
+          title: 'Cloud Server',
+          desc: 'Máy chủ ảo với vi xử lý thế hệ mới nhất, cấp phát tức thì, toàn quyền quản trị root/administrator.',
+          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>,
+          color: 'blue'
+        },
+        {
+          title: 'Cloud Storage',
+          desc: 'Lưu trữ Object Storage linh hoạt. Đảm bảo an toàn dữ liệu với cơ chế nhân bản 3 lớp (3-way replica).',
+          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>,
+          color: 'indigo'
+        },
+        {
+          title: 'Cloud Security',
+          desc: 'Bảo vệ toàn diện với Web Application Firewall (WAF), chống DDoS tự động nhận diện rủi ro.',
+          icon: <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
+          color: 'teal'
+        }
+      ];
 
   const testimonials = [
     {
@@ -134,7 +162,7 @@ export default function PublicHomePage() {
       <section className="relative -mt-20 z-20 px-6 sm:px-8">
         <div className="max-w-6xl mx-auto bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-white p-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x-0 md:divide-x divide-slate-100 text-center">
-            {stats.map((stat, idx) => (
+            {stats.map((stat: any, idx: number) => (
               <div key={idx} className="p-4">
                 <p className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-indigo-600 mb-2">
                   {stat.value}<span className="text-2xl md:text-3xl">{stat.suffix}</span>
@@ -172,7 +200,7 @@ export default function PublicHomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {services.map((srv, idx) => (
+          {services.map((srv: any, idx: number) => (
             <div key={idx} className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 hover:-translate-y-3 relative overflow-hidden">
               <div className={`absolute top-0 left-0 w-full h-1 bg-${srv.color}-500 opacity-0 group-hover:opacity-100 transition-opacity`}></div>
               <div className={`w-16 h-16 bg-${srv.color}-50 text-${srv.color}-600 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 group-hover:bg-${srv.color}-600 group-hover:text-white transition-all duration-500 shadow-sm`}>
@@ -201,7 +229,7 @@ export default function PublicHomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testi, idx) => (
+            {testimonials.map((testi: any, idx: number) => (
               <div key={idx} className={`bg-slate-800/50 p-10 rounded-[2.5rem] border border-slate-700/50 backdrop-blur-sm ${testi.offset ? 'md:-translate-y-6' : ''}`}>
                 <div className="flex gap-1 mb-8 text-amber-400">
                   {[...Array(5)].map((_, i) => (

@@ -13,7 +13,7 @@ export default function Header() {
     { name: 'Giới thiệu', path: '/gioi-thieu' },
     { name: 'Dịch vụ', path: '/dich-vu' },
     { name: 'Bảng giá', path: '/bang-gia' },
-    { name: 'Đối tác', path: '/doi-tac' },
+    { name: 'Khách hàng', path: '/khach-hang' },
     { name: 'Liên hệ', path: '/lien-he' },
   ];
 

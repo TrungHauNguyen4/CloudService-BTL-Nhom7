@@ -1,50 +1,76 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import apiClient from '@/lib/axios';
 
 export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(false);
 
   // Đưa dữ liệu vào mảng để dễ dàng thêm gói, đổi giá hoặc làm tính năng "Thanh toán hàng năm" sau này
-  const pricingPlans = [
-    {
-      id: 'basic',
-      name: 'Gói Cơ Bản',
-      desc: 'Phù hợp cho cá nhân, website tĩnh hoặc blog nhỏ mới bắt đầu.',
-      price: '150.000đ',
-      priceYear: '1.500.000đ',
-      cpu: '1 vCPU',
-      ram: '2GB RAM',
-      storage: '40GB NVMe SSD',
-      features: ['Băng thông 1TB', '1 IPv4 Tĩnh', 'Hỗ trợ ticket 24/7', 'Tự động Backup tuần'],
-      isPopular: false,
-    },
-    {
-      id: 'pro',
-      name: 'Gói Chuyên Nghiệp',
-      desc: 'Giải pháp hoàn hảo cho doanh nghiệp vừa và nhỏ, ứng dụng SaaS.',
-      price: '350.000đ',
-      priceYear: '3.500.000đ',
-      cpu: '2 vCPU',
-      ram: '4GB RAM',
-      storage: '80GB NVMe SSD',
-      features: ['Băng thông Không giới hạn', '1 IPv4 Tĩnh', 'Hỗ trợ ưu tiên (Phone/Chat)', 'Tự động Backup ngày', 'Bảo mật Anti-DDoS Cơ bản'],
-      isPopular: true,
-    },
-    {
-      id: 'enterprise',
-      name: 'Gói Doanh Nghiệp',
-      desc: 'Hiệu năng tối đa cho hệ thống lớn, thương mại điện tử có traffic cao.',
-      price: '800.000đ',
-      priceYear: '8.000.000đ',
-      cpu: '4 vCPU',
-      ram: '8GB RAM',
-      storage: '160GB NVMe SSD',
-      features: ['Băng thông Không giới hạn', '2 IPv4 Tĩnh', 'Quản trị viên riêng (Account Manager)', 'Tự động Backup mỗi 4h', 'Bảo mật Anti-DDoS Chuyên sâu', 'Cam kết Uptime 99.99% SLA'],
-      isPopular: false,
+      const [pricingPlans, setPricingPlans] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [qrData, setQrData] = useState<any>(null);
+  const [loadingQr, setLoadingQr] = useState(false);
+
+  const handleShowQr = async (planId: string) => {
+    setShowQrModal(true);
+    setLoadingQr(true);
+    setQrData(null);
+    try {
+      const res = await fetch("http://localhost:5000/api/service-plans/" + planId + "/qr");
+      if (res.ok) {
+        const data = await res.json();
+        setQrData(data);
+      } else {
+        alert("Không thể tải mã QR lúc này.");
+        setShowQrModal(false);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi kết nối.");
+      setShowQrModal(false);
+    } finally {
+      setLoadingQr(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/service-plans")
+      .then(res => res.json())
+      .then(data => {
+        // Map data from API to frontend structure
+        const mapped = data.map((plan: any, index: number) => {
+          // Parse specs assuming format "X vCPU / Y RAM / Z SSD"
+          const specsParts = plan.specs ? plan.specs.split(' / ') : [];
+          const cpu = specsParts[0] || '1 vCPU';
+          const ram = specsParts[1] || '2GB RAM';
+          const storage = specsParts[2] || '40GB SSD';
+          
+          // Generate dummy price based on index
+          const basePrice = (index + 1) * 150000;
+          
+          return {
+            id: plan.id,
+            name: plan.name,
+            desc: plan.description || 'Giải pháp Cloud tối ưu cho mọi nhu cầu.',
+            price: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(basePrice),
+            priceYear: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(basePrice * 10),
+            priceRaw: basePrice,
+            cpu,
+            ram,
+            storage,
+            features: ['Băng thông Không giới hạn', 'Hỗ trợ kỹ thuật 24/7', 'Tự động Backup'],
+            isPopular: index === 1
+          };
+        });
+        setPricingPlans(mapped);
+      })
+      .catch(err => console.error("Error fetching plans:", err))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <main className="min-h-screen bg-slate-50 pt-24 pb-32 px-6 sm:px-8 font-sans selection:bg-blue-500 selection:text-white">
@@ -123,7 +149,7 @@ export default function PricingPage() {
 
             {/* Danh sách tính năng */}
             <ul className="space-y-4 mb-10 flex-grow">
-              {plan.features.map((feature, idx) => (
+              {plan.features.map((feature: string, idx: number) => (
                 <li key={idx} className="flex items-start gap-3">
                   <div className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -149,6 +175,41 @@ export default function PricingPage() {
           </div>
         ))}
       </div>
+    
+      {/* QR MODAL */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl relative">
+            <button 
+              onClick={() => setShowQrModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <h3 className="text-xl font-bold text-slate-900 mb-2 text-center">Thanh toán Momo / VNPay</h3>
+            <p className="text-slate-500 text-sm text-center mb-6">Sử dụng ứng dụng ngân hàng để quét mã QR bên dưới.</p>
+            
+            <div className="flex justify-center items-center min-h-[250px] bg-slate-50 rounded-2xl border border-slate-100 p-4">
+              {loadingQr ? (
+                <div className="flex flex-col items-center">
+                  <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                  <span className="text-sm font-medium text-slate-500">Đang sinh mã QR...</span>
+                </div>
+              ) : qrData ? (
+                <div className="text-center">
+                  <img src={qrData.qrImage} alt="QR Code" className="w-48 h-48 mx-auto rounded-lg shadow-sm mb-4" />
+                  <p className="font-bold text-blue-600">{qrData.planName}</p>
+                  <p className="text-lg font-black text-slate-900 mt-1">
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(qrData.price)}
+                  </p>
+                </div>
+              ) : (
+                <div className="text-red-500 text-sm font-medium">Không thể hiển thị mã QR</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

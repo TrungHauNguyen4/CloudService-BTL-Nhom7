@@ -47,15 +47,23 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function NewsPage() {
-  const [articles, setArticles] = useState(fallbackArticles);
+    const [articles, setArticles] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Gọi API khi component mount (Nếu backend sẵn sàng)
   useEffect(() => {
     apiClient.get('/public/news')
-      .then(res => { if (res.data?.length) setArticles(res.data); })
-      .catch(() => { /* Giữ nguyên fallback data */ });
+      .then(res => {
+        if (res.data && Array.isArray(res.data)) {
+          setArticles(res.data);
+        } else if (res.data && res.data.items) {
+           // If the API returns pagination { items: [...], totalItems: ... }
+           setArticles(res.data.items);
+        }
+      })
+      .catch((err) => { console.error("Lỗi tải tin tức", err); })
+      .finally(() => setIsLoading(false));
   }, []);
 
   // Lọc bài viết theo thanh Tìm kiếm và nút Category
