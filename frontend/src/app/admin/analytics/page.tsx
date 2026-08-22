@@ -1,15 +1,8 @@
-﻿'use client';
+'use client';
 
+import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-
-const lineData = [
-  { name: 'Tháng 1', users: 4000, revenue: 2400 },
-  { name: 'Tháng 2', users: 3000, revenue: 1398 },
-  { name: 'Tháng 3', users: 2000, revenue: 9800 },
-  { name: 'Tháng 4', users: 2780, revenue: 3908 },
-  { name: 'Tháng 5', users: 1890, revenue: 4800 },
-  { name: 'Tháng 6', users: 2390, revenue: 3800 },
-];
+import apiClient from '@/lib/axios';
 
 const pieData = [
   { name: 'Gói Cơ Bản', value: 400 },
@@ -20,17 +13,60 @@ const pieData = [
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
 
 export default function AnalyticsPage() {
+  const [summary, setSummary] = useState({
+    totalOrders: 0,
+    totalRevenue: 0,
+    newCustomers: 0
+  });
+  const [revenueData, setRevenueData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      try {
+        const [summaryRes, revenueRes] = await Promise.all([
+          apiClient.get('/admin/stats/summary'),
+          apiClient.get('/admin/stats/revenue-chart')
+        ]);
+        setSummary(summaryRes.data);
+        
+        const mappedRevenue = revenueRes.data.map((item: any) => ({
+          name: item.month,
+          revenue: item.revenue
+        }));
+        setRevenueData(mappedRevenue);
+      } catch (error) {
+        console.error("Lỗi khi tải dữ liệu analytics:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalyticsData();
+  }, []);
+
+  if (loading) {
+    return <div className="p-8 text-center text-muted-foreground">Đang tải dữ liệu phân tích...</div>;
+  }
+
+  const overviewCards = [
+    { title: 'Tổng Doanh Thu', value: `$${summary.totalRevenue.toLocaleString()}` },
+    { title: 'Khách Hàng Mới', value: `+${summary.newCustomers}` },
+    { title: 'Đơn Hàng', value: summary.totalOrders },
+    { title: 'Lượt Truy Cập', value: 'Tracking...' }
+  ];
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-6">Thống Kê Tổng Quan</h1>
       
       {/* 4 Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        {['Tổng Doanh Thu', 'Khách Hàng Mới', 'Đơn Hàng', 'Lượt Truy Cập'].map((t, i) => (
+        {overviewCards.map((card, i) => (
           <div key={i} className="bg-card p-6 rounded-2xl shadow-sm border border-border">
-            <h3 className="text-muted-foreground text-sm font-medium mb-2">{t}</h3>
-            <p className="text-3xl font-black text-foreground">{(Math.random() * 10000).toFixed(0)}</p>
-            <p className="text-emerald-500 text-xs font-bold mt-2">+15% tháng này</p>
+            <h3 className="text-muted-foreground text-sm font-medium mb-2">{card.title}</h3>
+            <p className="text-3xl font-black text-foreground">{card.value}</p>
+            <p className="text-emerald-500 text-xs font-bold mt-2">Cập nhật tự động</p>
           </div>
         ))}
       </div>
@@ -38,21 +74,21 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Biểu đồ đường */}
         <div className="bg-card p-6 rounded-2xl shadow-sm border border-border h-96">
-          <h3 className="text-lg font-bold text-foreground mb-6">Tăng trưởng Người dùng</h3>
+          <h3 className="text-lg font-bold text-foreground mb-6">Tăng trưởng Doanh thu</h3>
           <ResponsiveContainer width="100%" height="80%">
-            <LineChart data={lineData}>
+            <LineChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="name" />
-              <YAxis />
+              <YAxis tickFormatter={(value) => `$${value}`} />
               <Tooltip />
-              <Line type="monotone" dataKey="users" stroke="#3b82f6" strokeWidth={3} />
+              <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
         {/* Biểu đồ tròn */}
         <div className="bg-card p-6 rounded-2xl shadow-sm border border-border h-96">
-          <h3 className="text-lg font-bold text-foreground mb-6">Tỷ lệ Gói Dịch vụ</h3>
+          <h3 className="text-lg font-bold text-foreground mb-6">Tỷ lệ Gói Dịch vụ (Mock)</h3>
           <ResponsiveContainer width="100%" height="80%">
             <PieChart>
               <Pie data={pieData} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={5} dataKey="value">

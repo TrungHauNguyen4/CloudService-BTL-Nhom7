@@ -1,23 +1,50 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle, XCircle, Search, Link as LinkIcon } from "lucide-react";
-
-const mockAffiliates = [
-  { id: "AFF-001", name: "Nguyễn Văn Đối Tác", email: "doitac1@gmail.com", source: "Website cá nhân", status: "Pending" },
-  { id: "AFF-002", name: "Trần Thị KOL", email: "kol_tran@yahoo.com", source: "Kênh Youtube", status: "Approved" },
-  { id: "AFF-003", name: "Lê Văn Tiktoker", email: "le_tiktok@gmail.com", source: "Tiktok 1M Follows", status: "Pending" },
-  { id: "AFF-004", name: "Spammer 99", email: "spam@bot.com", source: "Không rõ", status: "Rejected" },
-];
+import { useState, useEffect } from "react";
+import { CheckCircle, XCircle, Search, Link as LinkIcon, Loader2 } from "lucide-react";
+import apiClient from "@/lib/axios";
 
 export default function AffiliatesPage() {
-  const [affiliates] = useState(mockAffiliates);
+  const [affiliates, setAffiliates] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const getStatusBadge = (status: string) => {
+  const fetchAffiliates = async () => {
+    try {
+      const response = await apiClient.get('/admin/affiliates/pending');
+      setAffiliates(response.data);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách Affiliate:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAffiliates();
+  }, []);
+
+  const handleUpdateStatus = async (id: string, newStatus: number) => {
+    setProcessingId(id);
+    try {
+      await apiClient.put(`/admin/affiliates/${id}/status`, { status: newStatus }, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      await fetchAffiliates();
+    } catch (error) {
+      console.error("Lỗi khi duyệt Affiliate:", error);
+      alert("Cập nhật thất bại!");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // Status mapping: 0 = New/Pending, 1 = Processing, 2 = Completed/Approved, 3 = Cancelled/Rejected
+  const getStatusBadge = (status: number) => {
     switch(status) {
-      case 'Approved':
+      case 2:
         return <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-accent/20 text-accent border border-accent/20">Đã Phê Duyệt</span>;
-      case 'Rejected':
+      case 3:
         return <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-destructive/20 text-destructive border border-destructive/20">Từ Chối</span>;
       default:
         return <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-secondary/20 text-secondary border border-secondary/20">Chờ Xử Lý</span>;
@@ -62,35 +89,56 @@ export default function AffiliatesPage() {
               </tr>
             </thead>
             <tbody>
-              {affiliates.map((affiliate, index) => (
-                <tr 
-                  key={affiliate.id} 
-                  className="border-b border-border hover:bg-muted/30 transition-colors"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <td className="px-6 py-4 font-medium text-foreground">{affiliate.id}</td>
-                  <td className="px-6 py-4 font-semibold text-primary">{affiliate.name}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{affiliate.email}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{affiliate.source}</td>
-                  <td className="px-6 py-4">
-                    {getStatusBadge(affiliate.status)}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    {affiliate.status === 'Pending' ? (
-                      <div className="flex justify-end space-x-2">
-                        <button className="p-1.5 text-accent hover:bg-accent/10 rounded transition-colors" title="Chấp nhận">
-                          <CheckCircle className="w-5 h-5" />
-                        </button>
-                        <button className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors" title="Từ chối">
-                          <XCircle className="w-5 h-5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground italic">Đã chốt</span>
-                    )}
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" />
+                    Đang tải dữ liệu...
                   </td>
                 </tr>
-              ))}
+              ) : affiliates.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+                    Không có đơn đăng ký nào chờ xử lý.
+                  </td>
+                </tr>
+              ) : (
+                affiliates.map((affiliate, index) => (
+                  <tr 
+                    key={affiliate.id} 
+                    className="border-b border-border hover:bg-muted/30 transition-colors"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <td className="px-6 py-4 font-medium text-foreground">{affiliate.id.substring(0, 8).toUpperCase()}</td>
+                    <td className="px-6 py-4 font-semibold text-primary">{affiliate.fullName}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{affiliate.email}</td>
+                    <td className="px-6 py-4 text-muted-foreground">{affiliate.websiteOrSocialLink || 'Không rõ'}</td>
+                    <td className="px-6 py-4">
+                      {getStatusBadge(affiliate.status)}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      {affiliate.status === 0 || affiliate.status === 1 ? (
+                        <div className="flex justify-end space-x-2">
+                          {processingId === affiliate.id ? (
+                            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                          ) : (
+                            <>
+                              <button onClick={() => handleUpdateStatus(affiliate.id, 2)} className="p-1.5 text-accent hover:bg-accent/10 rounded transition-colors" title="Chấp nhận">
+                                <CheckCircle className="w-5 h-5" />
+                              </button>
+                              <button onClick={() => handleUpdateStatus(affiliate.id, 3)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors" title="Từ chối">
+                                <XCircle className="w-5 h-5" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">Đã xử lý</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

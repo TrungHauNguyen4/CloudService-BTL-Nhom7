@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { CheckCircle, XCircle, Search, Filter, Loader2, Download } from "lucide-react";
@@ -12,7 +12,7 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const response = await apiClient.get('/admin/orders/pending');
+      const response = await apiClient.get('/admin/orders');
       setOrders(response.data);
     } catch (error) {
       console.error("Lỗi khi tải danh sách đơn hàng:", error);
@@ -126,7 +126,7 @@ export default function OrdersPage() {
               ) : orders.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                    Không có đơn hàng nào đang chờ xử lý.
+                    Không có đơn hàng nào.
                   </td>
                 </tr>
               ) : (
