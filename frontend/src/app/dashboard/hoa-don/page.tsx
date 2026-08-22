@@ -1,9 +1,40 @@
+'use client';
+import { useState, useEffect } from 'react';
+import apiClient from '@/lib/axios';
+
+interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  amount: number;
+  status: string;
+  issueDate: string;
+  dueDate: string;
+  paidDate: string | null;
+  serviceName: string;
+}
+
 export default function BillingPage() {
-  const transactions = [
-    { id: 'INV-2026-0801', date: '01/08/2026', desc: 'Thanh toán chu kỳ tháng 7/2026', amount: '- 450,000 đ', status: 'Thành công' },
-    { id: 'DEP-2026-0715', date: '15/07/2026', desc: 'Nạp tiền qua VNPay', amount: '+ 1,000,000 đ', status: 'Thành công' },
-    { id: 'INV-2026-0701', date: '01/07/2026', desc: 'Thanh toán chu kỳ tháng 6/2026', amount: '- 320,000 đ', status: 'Thành công' },
-  ];
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [creditBalance, setCreditBalance] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsRes, invoicesRes] = await Promise.all([
+          apiClient.get('/customer/dashboard/stats'),
+          apiClient.get('/customer/invoices')
+        ]);
+        setCreditBalance(statsRes.data.creditBalance);
+        setInvoices(invoicesRes.data);
+      } catch (error) {
+        console.error("Lỗi khi tải thông tin hóa đơn", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <>
@@ -12,64 +43,53 @@ export default function BillingPage() {
       </header>
 
       <main className="p-8 overflow-y-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Card Số Dư */}
-          <div className="col-span-2 bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-2xl shadow-lg shadow-slate-900/20 flex items-center justify-between text-white border border-slate-700">
-            <div>
-              <p className="text-slate-400 font-medium mb-2 uppercase tracking-wider text-sm">Số dư hiện tại (Credit)</p>
-              <h3 className="text-4xl md:text-5xl font-black">1,250,000 <span className="text-2xl text-slate-500 font-medium">VNĐ</span></h3>
-              <p className="mt-4 text-sm text-slate-400">Chi phí dự kiến tháng này: <strong className="text-white">450,000 VNĐ</strong></p>
-            </div>
-            <button className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg transition-all transform hover:-translate-y-0.5">
-              Nạp tiền ngay
-            </button>
-          </div>
-
-          {/* Card Phương thức thanh toán */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center">
-            <p className="text-slate-500 font-semibold text-sm mb-4">Phương thức mặc định</p>
-            <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-xl bg-slate-50">
-              <div className="w-12 h-8 bg-blue-100 rounded flex items-center justify-center text-blue-700 font-black italic">VISA</div>
-              <div>
-                <p className="font-bold text-slate-800">**** **** **** 4242</p>
-                <p className="text-xs text-slate-500">Hết hạn: 12/28</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Bảng Lịch sử giao dịch */}
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/50">
-            <h2 className="text-lg font-bold text-slate-800">Lịch sử giao dịch</h2>
+            <h2 className="text-lg font-bold text-slate-800">Lịch sử giao dịch & Hóa đơn</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-bold">
-                  <th className="p-4 pl-6">Mã giao dịch</th>
-                  <th className="p-4">Ngày thực hiện</th>
-                  <th className="p-4">Mô tả</th>
+                  <th className="p-4 pl-6">Mã Hóa Đơn</th>
+                  <th className="p-4">Ngày tạo</th>
+                  <th className="p-4">Dịch vụ</th>
                   <th className="p-4 text-right">Số tiền</th>
                   <th className="p-4 text-right pr-6">Trạng thái</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {transactions.map((txn, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-4 pl-6 font-mono text-xs text-slate-500">{txn.id}</td>
-                    <td className="p-4 text-sm font-medium text-slate-600">{txn.date}</td>
-                    <td className="p-4 text-sm text-slate-700">{txn.desc}</td>
-                    <td className={`p-4 text-right font-bold ${txn.amount.includes('+') ? 'text-emerald-600' : 'text-slate-800'}`}>
-                      {txn.amount}
-                    </td>
-                    <td className="p-4 text-right pr-6">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
-                        {txn.status}
-                      </span>
-                    </td>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">Đang tải dữ liệu...</td>
                   </tr>
-                ))}
+                ) : invoices.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">Bạn chưa có hóa đơn nào.</td>
+                  </tr>
+                ) : (
+                  invoices.map((inv) => (
+                    <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="p-4 pl-6 font-mono text-xs text-slate-500">{inv.invoiceNumber}</td>
+                      <td className="p-4 text-sm font-medium text-slate-600">
+                        {new Date(inv.issueDate).toLocaleDateString('vi-VN')}
+                      </td>
+                      <td className="p-4 text-sm text-slate-700">{inv.serviceName}</td>
+                      <td className="p-4 text-right font-bold text-slate-800">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(inv.amount)}
+                      </td>
+                      <td className="p-4 text-right pr-6">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
+                          inv.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {inv.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

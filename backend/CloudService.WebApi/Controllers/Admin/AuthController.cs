@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using CloudService.Application.DTOs;
 using CloudService.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +14,19 @@ public class AuthController : ControllerBase
 
     public AuthController(IAuthService authService)
         => _authService = authService;
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var success = await _authService.RegisterAsync(dto);
+        if (!success)
+            return BadRequest(new { message = "Email này đã được sử dụng." });
+
+        return Ok(new { message = "Đăng ký thành công!" });
+    }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)

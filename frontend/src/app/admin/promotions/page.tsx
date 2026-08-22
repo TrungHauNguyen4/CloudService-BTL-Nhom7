@@ -18,15 +18,38 @@ export default function PromotionsPage() {
     expiryDate: ""
   });
 
+  const [globalDiscount, setGlobalDiscount] = useState<number>(16);
+  const [isSavingGlobal, setIsSavingGlobal] = useState(false);
+
   const fetchPromotions = async () => {
     setIsLoading(true);
     try {
-      const response = await apiClient.get('/admin/promotions');
-      setPromotions(response.data);
+      const [promoRes, settingsRes] = await Promise.all([
+        apiClient.get('/admin/promotions'),
+        apiClient.get('/admin/settings')
+      ]);
+      setPromotions(promoRes.data);
+      
+      const yearlyDiscountSetting = settingsRes.data.find((s: any) => s.key === 'YearlyDiscountRate');
+      if (yearlyDiscountSetting) {
+        setGlobalDiscount(parseInt(yearlyDiscountSetting.value) || 0);
+      }
     } catch (error) {
-      console.error("Lỗi khi tải mã khuyến mãi:", error);
+      console.error("Lỗi khi tải dữ liệu:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveGlobalDiscount = async () => {
+    setIsSavingGlobal(true);
+    try {
+      await apiClient.put(`/admin/settings/YearlyDiscountRate`, { value: globalDiscount.toString() });
+      alert('Đã cập nhật chính sách giảm giá chung thành công!');
+    } catch (error) {
+      alert('Có lỗi xảy ra khi lưu thiết lập chung.');
+    } finally {
+      setIsSavingGlobal(false);
     }
   };
 
@@ -45,11 +68,9 @@ export default function PromotionsPage() {
   };
 
   const handleEdit = (promo: any) => {
-    // Format date for datetime-local input: YYYY-MM-DDTHH:mm
+    // Format date for date input: YYYY-MM-DD
     const date = new Date(promo.expiryDate);
-    const formattedDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 16);
+    const formattedDate = date.toISOString().slice(0, 10);
 
     setFormData({
       code: promo.code,
@@ -73,7 +94,8 @@ export default function PromotionsPage() {
       const payload = {
         code: formData.code.toUpperCase(),
         discountPercentage: formData.discountPercentage,
-        expiryDate: new Date(formData.expiryDate).toISOString()
+        expiryDate: new Date(formData.expiryDate).toISOString(),
+        isActive: true // Always set to true when creating/editing from this UI for now
       };
 
       if (editingId) {
@@ -95,63 +117,99 @@ export default function PromotionsPage() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Mã Khuyến Mãi</h1>
-          <p className="text-muted-foreground">Quản lý và tạo các mã giảm giá cho dịch vụ</p>
+      <div className="bg-card border rounded-lg overflow-hidden mb-8 p-6 shadow-sm">
+        <h2 className="text-xl font-bold tracking-tight mb-2">Chính Sách Khuyến Mãi Chung</h2>
+        <p className="text-muted-foreground mb-6">Cấu hình các chính sách giảm giá áp dụng mặc định trên toàn hệ thống.</p>
+        
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="w-full sm:w-64">
+            <label className="block text-sm font-medium mb-1">% Giảm Giá Mua Theo Năm</label>
+            <div className="relative">
+              <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input 
+                type="number" 
+                min="0" max="100"
+                value={globalDiscount}
+                onChange={(e) => setGlobalDiscount(parseInt(e.target.value) || 0)}
+                className="w-full pl-9 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </div>
+          <button 
+            onClick={handleSaveGlobalDiscount}
+            disabled={isSavingGlobal}
+            className="bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 transition-colors h-[42px] flex items-center font-medium disabled:opacity-70 mt-2 sm:mt-0"
+          >
+            {isSavingGlobal ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Lưu Thay Đổi'}
+          </button>
         </div>
-        <button 
-          onClick={handleAddNew}
-          className="bg-primary text-primary-foreground flex items-center px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Tạo Mã Mới
-        </button>
       </div>
 
-      <div className="bg-card border rounded-lg overflow-hidden">
+      <div className="bg-card border rounded-lg overflow-hidden shadow-sm">
+        <div className="p-6 border-b flex justify-between items-center bg-slate-50/50">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight mb-1">Mã Khuyến Mãi</h2>
+            <p className="text-sm text-muted-foreground">Quản lý và tạo các mã giảm giá cho dịch vụ</p>
+          </div>
+          <button 
+            onClick={handleAddNew}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Tạo Mã Mới
+          </button>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-muted/50 text-muted-foreground uppercase text-xs">
+            <thead className="text-xs uppercase bg-slate-100 text-slate-500 border-b">
               <tr>
-                <th className="px-6 py-4 font-medium">Mã Giảm Giá</th>
-                <th className="px-6 py-4 font-medium">% Giảm</th>
-                <th className="px-6 py-4 font-medium">Hạn Sử Dụng</th>
-                <th className="px-6 py-4 font-medium">Trạng Thái</th>
-                <th className="px-6 py-4 font-medium text-right">Thao Tác</th>
+                <th className="px-6 py-4 font-bold">Mã Giảm Giá</th>
+                <th className="px-6 py-4 font-bold">% Giảm</th>
+                <th className="px-6 py-4 font-bold">Hạn Sử Dụng</th>
+                <th className="px-6 py-4 font-bold">Trạng Thái</th>
+                <th className="px-6 py-4 font-bold text-right">Thao Tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
+                  <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-blue-500" />
+                    Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : promotions.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                    Chưa có mã khuyến mãi nào
+                  <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                    Chưa có mã khuyến mãi nào.
                   </td>
                 </tr>
               ) : (
-                promotions.map((promo) => {
+                promotions.map((promo: any) => {
                   const isExpired = new Date(promo.expiryDate) < new Date();
+                  let statusText = promo.isActive ? 'Đang hoạt động' : 'Tạm ngưng';
+                  if (isExpired) statusText = 'Hết hạn';
+                  let statusColor = promo.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700';
+                  if (isExpired) statusColor = 'bg-red-100 text-red-700';
+
                   return (
-                    <tr key={promo.id} className="hover:bg-muted/50 transition-colors">
-                      <td className="px-6 py-4 font-bold text-primary">
+                    <tr key={promo.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <Tag className="w-4 h-4 text-muted-foreground" />
-                          {promo.code}
+                          <Tag className="w-4 h-4 text-blue-500" />
+                          <span className="font-bold text-blue-600">{promo.code}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-emerald-600 font-semibold">{promo.discountPercentage}%</td>
                       <td className="px-6 py-4">
-                        {new Date(promo.expiryDate).toLocaleDateString('vi-VN')}
+                        <span className="font-bold text-emerald-600">{promo.discountPercentage}%</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${isExpired ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                          {isExpired ? 'Hết hạn' : 'Đang hoạt động'}
+                        <span className="text-slate-600">{new Date(promo.expiryDate).toLocaleDateString('vi-VN')}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                          {statusText}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -223,7 +281,7 @@ export default function PromotionsPage() {
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input 
-                    type="datetime-local" 
+                    type="date" 
                     required
                     value={formData.expiryDate}
                     onChange={(e) => setFormData({...formData, expiryDate: e.target.value})}

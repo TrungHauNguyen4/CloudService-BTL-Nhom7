@@ -23,8 +23,16 @@ public class AdminAffiliatesController : ControllerBase
     public async Task<IActionResult> GetPending()
     {
         var affiliates = await _affiliateService.GetPendingAsync();
-
         return Ok(affiliates);
+    }
+
+    // GET: /api/admin/affiliates
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var affiliates = await _affiliateService.GetAllAsync();
+        // Sort by created at descending, pending first
+        return Ok(affiliates.OrderBy(a => a.Status).ThenByDescending(a => a.CreatedAt));
     }
 
     // PUT: /api/admin/affiliates/{id}/status

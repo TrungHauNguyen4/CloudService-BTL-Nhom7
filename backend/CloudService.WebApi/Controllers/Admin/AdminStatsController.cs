@@ -30,7 +30,14 @@ public class AdminStatsController : ControllerBase
     public async Task<IActionResult> GetRevenueChart()
     {
         var result = await _statsService.GetRevenueChartAsync();
+        return Ok(result);
+    }
 
+    // GET: /api/admin/stats/services-chart
+    [HttpGet("services-chart")]
+    public async Task<IActionResult> GetServicesChart()
+    {
+        var result = await _statsService.GetServicesChartAsync();
         return Ok(result);
     }
 }

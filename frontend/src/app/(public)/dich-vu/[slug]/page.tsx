@@ -26,32 +26,61 @@ export default function ServiceDetailPage() {
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const [activePromotion, setActivePromotion] = useState<any>(null);
+  const [timeLeft, setTimeLeft] = useState<{days: number, hours: number, minutes: number, seconds: number} | null>(null);
+
   useEffect(() => {
-    apiClient.get(`/public/service-plans/${id}`)
-      .then(res => {
-        const plan = res.data;
-        // Parse specs to find CPU, RAM, SSD, BW if possible, or use fallback
-        const specsLines = plan.specs ? plan.specs.split('\n') : [];
-        const getSpec = (keyword: string) => specsLines.find((l: string) => l.toLowerCase().includes(keyword)) || '-';
+    Promise.all([
+      apiClient.get(`/service-plans/${id}`),
+      apiClient.get(`/public/settings`).catch(() => ({ data: { settings: {} } })) // fallback if fails
+    ])
+      .then(([resPlan, resSettings]) => {
+        const plan = resPlan.data;
+        const settings = resSettings.data.settings || {};
+        const promo = resSettings.data.activePromotion;
         
-        // Cố gắng parse monthly/yearly price từ mảng Prices (nếu Backend trả về)
-        // Nếu Backend không trả về mảng Prices, dùng MonthlyPrice từ DTO và tự tính YearlyPrice
-        const priceMonth = plan.monthlyPrice || 0;
-        const priceYear = priceMonth * 10; // Giả sử mua 1 năm tặng 2 tháng
+        if (promo) {
+          setActivePromotion(promo);
+        }
+        
+        // Parse specs to find CPU, RAM, SSD, BW
+        let specsLines: string[] = [];
+        if (plan.specs) {
+          specsLines = plan.specs.split(/[\n,]| \/ /).map((s: string) => s.trim()).filter(Boolean);
+        }
+
+        const getSpec = (keyword: string) => specsLines.find((l: string) => l.toLowerCase().includes(keyword));
+        
+        // Dynamic Discounts
+        const yearlyDiscountRateStr = settings['YearlyDiscountRate'] || '16';
+        const yearlyDiscountRate = parseInt(yearlyDiscountRateStr) || 0;
+        
+        const monthlyDiscountRate = promo ? promo.discountPercentage : 0;
+        
+        const priceMonthOriginal = plan.monthlyPrice || 0;
+        const priceMonth = priceMonthOriginal * (1 - monthlyDiscountRate / 100);
+        
+        const priceYearOriginal = priceMonthOriginal * 12;
+        const priceYear = priceYearOriginal * (1 - yearlyDiscountRate / 100);
 
         setService({
           name: plan.category?.name || 'Gói Dịch vụ',
-          desc: 'Máy chủ ảo hiệu năng cao với 100% NVMe SSD, cam kết uptime 99.99%.',
+          desc: plan.category?.description || 'Máy chủ ảo hiệu năng cao với 100% NVMe SSD, cam kết uptime 99.99%.',
           color: 'blue',
           plans: [
             { 
               name: plan.name, 
-              cpu: getSpec('vcore') || getSpec('cpu') || '-', 
+              cpu: getSpec('vcpu') || getSpec('cpu') || getSpec('core') || '-', 
               ram: getSpec('ram') || getSpec('gb') || '-', 
-              ssd: getSpec('ssd') || '-', 
-              bw: getSpec('băng thông') || 'Không giới hạn', 
+              ssd: getSpec('ssd') || getSpec('nvme') || getSpec('disk') || '-', 
+              bw: getSpec('băng thông') || getSpec('bw') || 'Không giới hạn', 
               priceMonth: priceMonth, 
-              priceYear: priceYear 
+              priceMonthOriginal: priceMonthOriginal,
+              monthlyDiscountRate: monthlyDiscountRate,
+              promoCode: promo ? promo.code : null,
+              priceYear: priceYear,
+              priceYearOriginal: priceYearOriginal,
+              yearlyDiscountRate: yearlyDiscountRate
             }
           ],
           features: specsLines.length > 0 ? specsLines : fallbackService.features,
@@ -62,6 +91,32 @@ export default function ServiceDetailPage() {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!activePromotion) return;
+    
+    // Đếm đến 23:59:59 của ngày ExpiryDate
+    const expiry = new Date(activePromotion.expiryDate);
+    expiry.setHours(23, 59, 59, 999);
+    
+    const calculateTimeLeft = () => {
+      const difference = expiry.getTime() - new Date().getTime();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        });
+      } else {
+        setTimeLeft(null);
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, [activePromotion]);
 
   if (loading) {
     return (
@@ -128,13 +183,36 @@ export default function ServiceDetailPage() {
                   <td className="px-6 py-5 text-slate-600 text-sm">{plan.ram}</td>
                   <td className="px-6 py-5 text-slate-600 text-sm">{plan.ssd}</td>
                   <td className="px-6 py-5 text-slate-600 text-sm">{plan.bw}</td>
-                  <td className="px-6 py-5 font-bold text-slate-900">{formatPrice(plan.priceMonth)}</td>
-                  <td className="px-6 py-5 text-emerald-600 font-semibold text-sm">{formatPrice(plan.priceYear)}</td>
+                  <td className="px-6 py-5 font-bold text-slate-900">
+                    {plan.monthlyDiscountRate > 0 ? (
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-emerald-600 font-bold text-sm">{formatPrice(plan.priceMonth)}</span>
+                          <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Giảm {plan.monthlyDiscountRate}%</span>
+                        </div>
+                        <span className="text-xs text-slate-400 line-through mb-2">{formatPrice(plan.priceMonthOriginal)}</span>
+                        {timeLeft && (
+                          <div className="flex items-center gap-1 text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-1 rounded-md font-medium w-fit">
+                            <span className="animate-pulse">🔥</span>
+                            Kết thúc sau: {timeLeft.days}d {timeLeft.hours.toString().padStart(2, '0')}:{timeLeft.minutes.toString().padStart(2, '0')}:{timeLeft.seconds.toString().padStart(2, '0')}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span>{formatPrice(plan.priceMonth)}</span>
+                    )}
+                  </td>
                   <td className="px-6 py-5">
-                    <Link
-                      href={`/lien-he?plan=${plan.name}`}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-5 py-2 rounded-full transition-all"
-                    >
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-600 font-bold text-sm">{formatPrice(plan.priceYear)}</span>
+                        <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Giảm {plan.yearlyDiscountRate}%</span>
+                      </div>
+                      <span className="text-xs text-slate-400 line-through mt-0.5">{formatPrice(plan.priceYearOriginal)}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5 text-right">
+                    <Link href={`/thanh-toan?plan=${id}${plan.promoCode ? `&promo=${plan.promoCode}` : ''}`} className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
                       Đặt ngay
                     </Link>
                   </td>

@@ -8,11 +8,11 @@ export default function proxy(request: NextRequest) {
   const isProtectedPath = request.nextUrl.pathname.startsWith('/admin');
 
   if (isProtectedPath && !token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL('/dang-nhap', request.url));
   }
   
   // Nếu đã đăng nhập mà lại cố vào trang login thì đá về dashboard
-  if (request.nextUrl.pathname === '/login' && token) {
+  if (request.nextUrl.pathname === '/dang-nhap' && token) {
     return NextResponse.redirect(new URL('/admin/dashboard', request.url));
   }
 
@@ -20,5 +20,5 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/login'],
+  matcher: ['/admin/:path*', '/dang-nhap'],
 };

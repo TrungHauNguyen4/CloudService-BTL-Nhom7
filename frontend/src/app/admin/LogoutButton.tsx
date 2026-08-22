@@ -11,7 +11,7 @@ export default function LogoutButton() {
     if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
     Cookies.remove("token");
     Cookies.remove("role"); // In case role is saved
-    router.push("/login");
+    router.push("/dang-nhap");
   };
 
   return (

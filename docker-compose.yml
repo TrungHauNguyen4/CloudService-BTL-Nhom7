@@ -29,5 +29,20 @@ services:
       # Tự động trỏ chuỗi kết nối Database sang container sqldb ở trên
       - ConnectionStrings__Default=Server=sqldb;Database=CloudServiceDb;User=sa;Password=CloudService@2026!;TrustServerCertificate=True
 
+  # 3. Vận hành Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+    container_name: cloudservice_frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://backend:80/api
+
 volumes:
   sql_data: # Khai báo ổ cứng ảo để lưu dữ liệu SQL, tránh mất data khi tắt Docker

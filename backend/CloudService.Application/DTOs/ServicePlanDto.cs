@@ -10,4 +10,5 @@ public class ServicePlanDto
     public bool IsActive { get; set; }
     public CategoryDto? Category { get; set; }
     public decimal MonthlyPrice { get; set; }
+    public int RegistrationCount { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿using CloudService.Domain.Interfaces;
+using CloudService.Domain.Interfaces;
 using CloudService.Infrastructure.Data;
 
 namespace CloudService.Infrastructure.Repositories;
@@ -15,6 +15,12 @@ public class UnitOfWork : IUnitOfWork
     public IAppUserRepository AppUsers { get; }
     public IAuditLogRepository AuditLogs { get; }
     public IPromotionRepository Promotions { get; }
+    
+    public IGenericRepository<CloudService.Domain.Entities.CustomerService> CustomerServices { get; }
+    public IGenericRepository<CloudService.Domain.Entities.Invoice> Invoices { get; }
+    public IGenericRepository<CloudService.Domain.Entities.ApiKey> ApiKeys { get; }
+    public IGenericRepository<CloudService.Domain.Entities.SystemSetting> SystemSettings { get; }
+
     public UnitOfWork(AppDbContext context)
     {
         _context = context;
@@ -27,6 +33,11 @@ public class UnitOfWork : IUnitOfWork
         AppUsers = new AppUserRepository(context);
         AuditLogs = new AuditLogRepository(context);
         Promotions = new PromotionRepository(context);
+        
+        CustomerServices = new GenericRepository<CloudService.Domain.Entities.CustomerService>(context);
+        Invoices = new GenericRepository<CloudService.Domain.Entities.Invoice>(context);
+        ApiKeys = new GenericRepository<CloudService.Domain.Entities.ApiKey>(context);
+        SystemSettings = new GenericRepository<CloudService.Domain.Entities.SystemSetting>(context);
     }
 
     public async Task<int> SaveChangesAsync()

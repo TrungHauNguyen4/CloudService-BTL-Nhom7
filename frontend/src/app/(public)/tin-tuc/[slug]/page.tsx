@@ -5,40 +5,16 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/axios';
 
-// Dữ liệu dự phòng chi tiết
-const fallbackArticle = {
-  id: '1',
-  title: 'Xu hướng Cloud Computing 2026',
-  slug: 'xu-huong-cloud-2026',
-  content: `
-    <h2>1. Multi-Cloud là xu hướng tất yếu</h2>
-    <p>Các doanh nghiệp lớn đang chuyển dần sang mô hình Multi-Cloud, kết hợp nhiều nhà cung cấp dịch vụ đám mây khác nhau để tối ưu hóa chi phí và giảm thiểu rủi ro phụ thuộc vào một nhà cung cấp duy nhất (vendor lock-in). Theo khảo sát của Flexera, hơn 89% doanh nghiệp áp dụng chiến lược multi-cloud trong năm 2026.</p>
-    
-    <h2>2. AI tích hợp trực tiếp vào hạ tầng Cloud</h2>
-    <p>Trí tuệ nhân tạo không còn là một dịch vụ riêng biệt mà đã được tích hợp sâu vào các nền tảng cloud. Từ tự động phát hiện và phản ứng trước các cuộc tấn công mạng, đến tối ưu hóa tài nguyên máy chủ dựa trên mô hình dự đoán tải — AI đang trở thành "bộ não" thầm lặng của mọi hạ tầng.</p>
-
-    <h2>3. Edge Computing bùng nổ</h2>
-    <p>Với sự phát triển của IoT và 5G, nhu cầu xử lý dữ liệu tại biên (edge) thay vì gửi về trung tâm dữ liệu tập trung ngày càng tăng. Edge Computing giúp giảm độ trễ xuống mức mili-giây, mở ra kỷ nguyên mới cho xe tự lái, nhà máy thông minh và thành phố thông minh.</p>
-
-    <h2>4. Serverless tiếp tục tăng trưởng</h2>
-    <p>Kiến trúc Serverless (FaaS) cho phép lập trình viên tập trung hoàn toàn vào logic nghiệp vụ mà không cần lo về provisioning, scaling hay quản lý hệ điều hành. AWS Lambda, Azure Functions và Google Cloud Run đang cạnh tranh khốc liệt ở phân khúc này.</p>
-  `,
-  category: 'Xu hướng',
-  authorName: 'Admin',
-  publishedAt: '2026-08-15T10:00:00',
-  isPublished: true,
-};
-
 export default function NewsDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
-  const [article, setArticle] = useState(fallbackArticle);
+  const [article, setArticle] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     apiClient.get(`/public/news/${slug}`)
       .then(res => { if (res.data) setArticle(res.data); })
-      .catch(() => { /* Giữ fallback */ })
+      .catch(() => { setArticle(null); })
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -50,6 +26,15 @@ export default function NewsDetailPage() {
           <div className="h-4 bg-slate-200 rounded-xl w-1/2" />
           <div className="h-64 bg-slate-200 rounded-2xl mt-8" />
         </div>
+      </main>
+    );
+  }
+
+  if (!article) {
+    return (
+      <main className="min-h-screen bg-slate-50 pt-32 text-center">
+        <h1 className="text-3xl font-bold text-slate-900 mb-4">Bài viết không tồn tại</h1>
+        <Link href="/tin-tuc" className="text-blue-600 font-semibold hover:underline">← Quay lại Tin tức</Link>
       </main>
     );
   }

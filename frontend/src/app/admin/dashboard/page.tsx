@@ -51,7 +51,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <SummaryCard 
           title="Tổng Doanh Thu" 
           value={`$${summary.totalRevenue.toLocaleString()}`} 
@@ -72,13 +72,6 @@ export default function DashboardPage() {
           change="Người dùng vừa đăng ký" 
           icon={<Users className="w-5 h-5 text-accent" />} 
           delay="200"
-        />
-        <SummaryCard 
-          title="Lượt Truy Cập" 
-          value="Liên hệ GG Analytics" 
-          change="Chưa tích hợp Tracking" 
-          icon={<Activity className="w-5 h-5 text-destructive" />} 
-          delay="300"
         />
       </div>
 

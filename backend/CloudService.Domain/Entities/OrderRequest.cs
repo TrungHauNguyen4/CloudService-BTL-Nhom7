@@ -8,7 +8,7 @@ public class OrderRequest : BaseEntity
 {
     public Guid? CustomerId { get; set; } // Khách hàng có thể đã có tài khoản hoặc vãng lai
     public string ServiceName { get; set; } = string.Empty;
-    public Guid PlanId { get; set; }
+    public Guid? PlanId { get; set; }
     public BillingCycle BillingCycle { get; set; }
     public string CustomerName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
@@ -17,5 +17,14 @@ public class OrderRequest : BaseEntity
 
     // Navigation properties
     public AppUser? Customer { get; set; }
-    public ServicePlan Plan { get; set; } = null!;
+    public ServicePlan? Plan { get; set; }
+    
+    // Tracking affiliate
+    public Guid? AffiliateId { get; set; }
+    
+    // Khuyến mãi / Giới thiệu
+    public decimal FinalPrice { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public string? AppliedPromoCode { get; set; }
+    public string? AppliedAffiliateCode { get; set; }
 }

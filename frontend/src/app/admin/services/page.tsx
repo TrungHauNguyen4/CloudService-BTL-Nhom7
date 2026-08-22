@@ -56,7 +56,7 @@ export default function ServicesPage() {
     setLoadingQr(true);
     setQrData(null);
     try {
-      const response = await apiClient.get('/public/service-plans/' + planId + '/qr');
+      const response = await apiClient.get('/service-plans/' + planId + '/qr');
       setQrData(response.data);
     } catch (error) {
       console.error("Lỗi khi tải mã QR:", error);

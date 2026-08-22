@@ -11,7 +11,7 @@ export default function AffiliatesPage() {
 
   const fetchAffiliates = async () => {
     try {
-      const response = await apiClient.get('/admin/affiliates/pending');
+      const response = await apiClient.get('/admin/affiliates');
       setAffiliates(response.data);
     } catch (error) {
       console.error("Lỗi khi tải danh sách Affiliate:", error);
@@ -39,13 +39,13 @@ export default function AffiliatesPage() {
     }
   };
 
-  // Status mapping: 0 = New/Pending, 1 = Processing, 2 = Completed/Approved, 3 = Cancelled/Rejected
+  // Status mapping from C# enum: 1 = New, 2 = Processing, 3 = Completed, 4 = Rejected
   const getStatusBadge = (status: number) => {
     switch(status) {
-      case 2:
-        return <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-accent/20 text-accent border border-accent/20">Đã Phê Duyệt</span>;
       case 3:
-        return <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-destructive/20 text-destructive border border-destructive/20">Từ Chối</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-accent/20 text-accent border border-accent/20">Đã Phê Duyệt</span>;
+      case 4:
+        return <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-destructive/20 text-destructive border border-destructive/20">Đã Huỷ/Từ Chối</span>;
       default:
         return <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-secondary/20 text-secondary border border-secondary/20">Chờ Xử Lý</span>;
     }
@@ -80,7 +80,7 @@ export default function AffiliatesPage() {
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b border-border">
               <tr>
-                <th scope="col" className="px-6 py-4 font-medium">Mã Đăng Ký</th>
+                <th scope="col" className="px-6 py-4 font-medium">Mã Giới Thiệu</th>
                 <th scope="col" className="px-6 py-4 font-medium">Họ Tên</th>
                 <th scope="col" className="px-6 py-4 font-medium">Email Liên Hệ</th>
                 <th scope="col" className="px-6 py-4 font-medium">Nguồn Traffic</th>
@@ -99,7 +99,7 @@ export default function AffiliatesPage() {
               ) : affiliates.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                    Không có đơn đăng ký nào chờ xử lý.
+                    Không có đơn đăng ký nào.
                   </td>
                 </tr>
               ) : (
@@ -109,31 +109,54 @@ export default function AffiliatesPage() {
                     className="border-b border-border hover:bg-muted/30 transition-colors"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <td className="px-6 py-4 font-medium text-foreground">{affiliate.id.substring(0, 8).toUpperCase()}</td>
-                    <td className="px-6 py-4 font-semibold text-primary">{affiliate.fullName}</td>
+                    <td className="px-6 py-4 font-medium text-primary">
+                      {affiliate.affiliateCode ? (
+                        <code className="bg-primary/10 px-2 py-1 rounded text-primary">{affiliate.affiliateCode}</code>
+                      ) : (
+                        <span className="text-muted-foreground italic">Chưa cấp</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-foreground">{affiliate.fullName}</td>
                     <td className="px-6 py-4 text-muted-foreground">{affiliate.email}</td>
                     <td className="px-6 py-4 text-muted-foreground">{affiliate.websiteOrSocialLink || 'Không rõ'}</td>
                     <td className="px-6 py-4">
                       {getStatusBadge(affiliate.status)}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {affiliate.status === 0 || affiliate.status === 1 ? (
+                      {affiliate.status === 1 || affiliate.status === 2 ? (
                         <div className="flex justify-end space-x-2">
                           {processingId === affiliate.id ? (
                             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                           ) : (
                             <>
-                              <button onClick={() => handleUpdateStatus(affiliate.id, 2)} className="p-1.5 text-accent hover:bg-accent/10 rounded transition-colors" title="Chấp nhận">
+                              <button onClick={() => handleUpdateStatus(affiliate.id, 3)} className="p-1.5 text-accent hover:bg-accent/10 rounded transition-colors" title="Chấp nhận">
                                 <CheckCircle className="w-5 h-5" />
                               </button>
-                              <button onClick={() => handleUpdateStatus(affiliate.id, 3)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors" title="Từ chối">
+                              <button onClick={() => handleUpdateStatus(affiliate.id, 4)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors" title="Từ chối">
                                 <XCircle className="w-5 h-5" />
                               </button>
                             </>
                           )}
                         </div>
+                      ) : affiliate.status === 3 ? (
+                        <div className="flex justify-end">
+                           {processingId === affiliate.id ? (
+                             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                           ) : (
+                             <button 
+                               onClick={() => {
+                                 if (window.confirm('Bạn có chắc chắn muốn huỷ bỏ hợp đồng Affiliate này? Khách hàng sẽ không thể dùng mã này để giới thiệu nữa.')) {
+                                   handleUpdateStatus(affiliate.id, 4);
+                                 }
+                               }} 
+                               className="px-3 py-1.5 text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground rounded-lg transition-colors border border-destructive/20"
+                             >
+                               Huỷ hợp đồng
+                             </button>
+                           )}
+                        </div>
                       ) : (
-                        <span className="text-xs text-muted-foreground italic">Đã xử lý</span>
+                        <span className="text-xs text-muted-foreground italic">Đã huỷ/Từ chối</span>
                       )}
                     </td>
                   </tr>

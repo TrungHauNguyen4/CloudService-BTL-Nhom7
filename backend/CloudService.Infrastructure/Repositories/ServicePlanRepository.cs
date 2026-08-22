@@ -23,4 +23,19 @@ public class ServicePlanRepository
             .Where(p => p.CategoryId == categoryId && p.IsActive)
             .Include(p => p.Prices)
             .ToListAsync();
+
+    public async Task<ServicePlan?> GetByIdWithDetailsAsync(Guid id)
+        => await _dbSet
+            .Include(p => p.Prices)
+            .Include(p => p.Category)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+    public async Task<IEnumerable<ServicePlan>> GetAllWithDetailsAsync()
+        => await _dbSet
+            .Include(p => p.Prices)
+            .Include(p => p.Category)
+            .ToListAsync();
+
+    public void AddPrice(PlanPrice price)
+        => _context.Set<PlanPrice>().Add(price);
 }

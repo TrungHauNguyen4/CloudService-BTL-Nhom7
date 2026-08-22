@@ -23,6 +23,13 @@ public class AffiliateApplicationService
             .GetPendingAsync();
     }
 
+    public async Task<IEnumerable<AffiliateApplication>> GetAllAsync()
+    {
+        return await _unitOfWork
+            .AffiliateApplications
+            .GetAllAsync();
+    }
+
     public async Task<AffiliateApplication?> UpdateStatusAsync(
         Guid id,
         OrderStatus status)
@@ -34,6 +41,13 @@ public class AffiliateApplicationService
         if (affiliate == null)
         {
             return null;
+        }
+
+        if (status == OrderStatus.Completed && string.IsNullOrEmpty(affiliate.AffiliateCode))
+        {
+            var random = new Random();
+            affiliate.AffiliateCode = $"CLOUD-{random.Next(10000, 99999)}";
+            // Check uniqueness in real world, simple generation for now
         }
 
         affiliate.Status = status;

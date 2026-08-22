@@ -52,7 +52,7 @@ export default function ServicesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiClient.get('/public/service-plans')
+    apiClient.get('/service-plans')
       .then(res => {
         if (res.data && res.data.length > 0) {
           // Map API data to the UI structure, using fallback styles for index
