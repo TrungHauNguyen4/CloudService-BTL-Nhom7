@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+﻿import { ReactNode } from "react";
 import Link from "next/link";
 import { 
   LayoutDashboard, 
@@ -7,7 +7,10 @@ import {
   Users, 
   Settings,
   Bell,
-  Search
+  Search,
+  Newspaper,
+  PieChart,
+  History
 } from "lucide-react";
 
 export const metadata = {
@@ -30,6 +33,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <NavItem href="/admin/services" icon={<Server size={20} />} label="Gói Cloud" />
           <NavItem href="/admin/orders" icon={<ShoppingCart size={20} />} label="Đơn Hàng" />
           <NavItem href="/admin/affiliates" icon={<Users size={20} />} label="Đối Tác (Affiliate)" />
+          <NavItem href="/admin/news" icon={<Newspaper size={20} />} label="Tin Tức" />
+          <NavItem href="/admin/analytics" icon={<PieChart size={20} />} label="Thống Kê" />
+          <NavItem href="/admin/audit-logs" icon={<History size={20} />} label="Nhật Ký Hệ Thống" />
         </nav>
         
         <div className="p-4 border-t border-border shrink-0">
