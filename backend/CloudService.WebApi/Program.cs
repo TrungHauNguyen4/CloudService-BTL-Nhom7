@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using CloudService.Application.Interfaces;
 using CloudService.Application.Services;
 using CloudService.Domain.Interfaces;
@@ -36,6 +36,7 @@ builder.Services.AddScoped<IAffiliateApplicationService, AffiliateApplicationSer
 builder.Services.AddScoped<IAdminStatsService, AdminStatsService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
+builder.Services.AddScoped<ICustomerAffiliateService, CustomerAffiliateService>();
 
 // ==================== INFRASTRUCTURE SERVICES ====================
 
@@ -67,6 +68,8 @@ builder.Services
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+            RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+            NameClaimType = System.Security.Claims.ClaimTypes.Name,
 
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],

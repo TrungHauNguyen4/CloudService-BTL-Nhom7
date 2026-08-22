@@ -4,39 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import apiClient from '@/lib/axios';
 
-// Dữ liệu dự phòng nếu API chưa sẵn sàng
-const fallbackArticles = [
-  {
-    id: '1', title: 'Xu hướng Cloud Computing 2026', slug: 'xu-huong-cloud-2026',
-    content: 'Điện toán đám mây tiếp tục là xu hướng chủ đạo trong chuyển đổi số doanh nghiệp. Các báo cáo cho thấy sự gia tăng về nhu cầu bảo mật và AI tích hợp...',
-    category: 'Xu hướng', authorName: 'Admin', publishedAt: '2026-08-15T10:00:00', isPublished: true,
-  },
-  {
-    id: '2', title: 'Hướng dẫn bảo mật Server Linux', slug: 'bao-mat-server-linux',
-    content: 'Bảo mật máy chủ Linux là bước quan trọng đầu tiên để bảo vệ dữ liệu doanh nghiệp. Bài viết này sẽ hướng dẫn bạn các bước cơ bản để thiết lập firewall và fail2ban...',
-    category: 'Hướng dẫn', authorName: 'Editor', publishedAt: '2026-08-10T08:00:00', isPublished: true,
-  },
-  {
-    id: '3', title: 'So sánh VPS vs Dedicated Server', slug: 'so-sanh-vps-dedicated',
-    content: 'Khi nào nên dùng VPS và khi nào nên chuyển sang Dedicated Server? Bài viết phân tích ưu nhược điểm của từng loại để bạn dễ dàng lựa chọn...',
-    category: 'So sánh', authorName: 'Admin', publishedAt: '2026-08-05T14:00:00', isPublished: true,
-  },
-  {
-    id: '4', title: 'CloudService ra mắt gói Enterprise mới', slug: 'ra-mat-goi-enterprise',
-    content: 'Chúng tôi vui mừng giới thiệu gói Enterprise mới với hiệu năng gấp 3 lần, trang bị 100% NVMe SSD và băng thông không giới hạn...',
-    category: 'Thông báo', authorName: 'Admin', publishedAt: '2026-07-28T09:00:00', isPublished: true,
-  },
-  {
-    id: '5', title: 'Tối ưu hóa chi phí Cloud cho Startup', slug: 'toi-uu-chi-phi-cloud-startup',
-    content: 'Với ngân sách hạn chế, các startup cần chiến lược sử dụng cloud thông minh. Tìm hiểu cách thiết lập auto-scaling để tiết kiệm chi phí...',
-    category: 'Hướng dẫn', authorName: 'Editor', publishedAt: '2026-07-20T11:00:00', isPublished: true,
-  },
-  {
-    id: '6', title: 'Backup dữ liệu tự động với Cron Job', slug: 'backup-du-lieu-cron-job',
-    content: 'Hướng dẫn từng bước thiết lập backup tự động sử dụng cron job trên Linux, đẩy dữ liệu lên S3 an toàn và tiết kiệm...',
-    category: 'Hướng dẫn', authorName: 'Editor', publishedAt: '2026-07-15T10:00:00', isPublished: true,
-  },
-];
 
 // Ánh xạ từng Category sang một màu khác nhau
 const categoryColors: Record<string, string> = {

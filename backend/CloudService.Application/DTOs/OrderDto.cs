@@ -12,4 +12,9 @@ public class OrderDto
     public BillingCycle BillingCycle { get; set; }
     public OrderStatus Status { get; set; }
     public DateTime CreatedAt { get; set; }
+    
+    public decimal FinalPrice { get; set; }
+    public string? Phone { get; set; }
+    public string? AppliedPromoCode { get; set; }
+    public string? AppliedAffiliateCode { get; set; }
 }

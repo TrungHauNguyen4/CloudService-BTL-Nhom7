@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using CloudService.Application.DTOs;
 using CloudService.Application.Interfaces;
 using CloudService.Infrastructure.Data;
@@ -20,6 +20,24 @@ public class AuthService : IAuthService
         _context = context;
         _jwtService = jwtService;
         _passwordHashService = passwordHashService;
+    }
+
+    public async Task<bool> RegisterAsync(RegisterDto dto)
+    {
+        if (await _context.AppUsers.AnyAsync(u => u.Email == dto.Email))
+            return false;
+
+        var user = new CloudService.Domain.Entities.AppUser
+        {
+            Username = dto.FullName,
+            Email = dto.Email,
+            PasswordHash = _passwordHashService.Hash(dto.Password),
+            Role = CloudService.Domain.Enums.UserRole.Customer
+        };
+
+        _context.AppUsers.Add(user);
+        await _context.SaveChangesAsync();
+        return true;
     }
 
     public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)

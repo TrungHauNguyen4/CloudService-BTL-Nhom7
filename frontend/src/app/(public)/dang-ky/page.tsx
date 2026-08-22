@@ -1,6 +1,37 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import apiClient from '@/lib/axios';
+import { Loader2 } from 'lucide-react';
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    password: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      await apiClient.post('/auth/register', formData);
+      alert('Đăng ký thành công! Vui lòng đăng nhập.');
+      router.push('/dang-nhap');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Đăng ký thất bại, vui lòng thử lại.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <main className="min-h-screen flex bg-white font-sans selection:bg-blue-500 selection:text-white">
       
@@ -67,13 +98,21 @@ export default function RegisterPage() {
             <div className="flex-grow border-t border-slate-200"></div>
           </div>
 
+          {error && (
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-sm font-medium">
+              {error}
+            </div>
+          )}
+
           {/* Traditional Form */}
-          <form className="space-y-5">
+          <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <label className="block text-sm font-bold text-slate-700">Họ và tên</label>
               <input 
                 type="text" 
                 required
+                value={formData.fullName}
+                onChange={e => setFormData({...formData, fullName: e.target.value})}
                 className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm text-slate-800" 
                 placeholder="Nguyễn Văn A" 
               />
@@ -84,6 +123,8 @@ export default function RegisterPage() {
               <input 
                 type="email" 
                 required
+                value={formData.email}
+                onChange={e => setFormData({...formData, email: e.target.value})}
                 className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm text-slate-800" 
                 placeholder="name@company.com" 
               />
@@ -94,8 +135,11 @@ export default function RegisterPage() {
               <input 
                 type="password" 
                 required
+                minLength={6}
+                value={formData.password}
+                onChange={e => setFormData({...formData, password: e.target.value})}
                 className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm text-slate-800" 
-                placeholder="Tạo mật khẩu (ít nhất 8 ký tự)" 
+                placeholder="Tạo mật khẩu (ít nhất 6 ký tự)" 
               />
             </div>
 
@@ -114,10 +158,12 @@ export default function RegisterPage() {
             </div>
 
             <button 
-              type="button" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform hover:-translate-y-0.5 mt-4"
+              type="submit" 
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform hover:-translate-y-0.5 mt-4 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
             >
-              Tạo Tài Khoản
+              {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
+              {isSubmitting ? 'Đang xử lý...' : 'Tạo Tài Khoản'}
             </button>
           </form>
 

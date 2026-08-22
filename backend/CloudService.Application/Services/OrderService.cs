@@ -22,9 +22,97 @@ public class OrderService : IOrderService
     public async Task<OrderDto> CreateOrderAsync(CreateOrderDto dto)
     {
         var order = _mapper.Map<OrderRequest>(dto);
+        var basePrice = dto.BillingCycle == BillingCycle.Yearly ? 1500000m : 150000m;
         
-        // Logic nghiệp vụ: Đơn hàng mới luôn ở trạng thái "New"
-        order.Status = OrderStatus.New;
+        // Fetch actual plan price if PlanId is provided
+        if (dto.PlanId.HasValue)
+        {
+            var plan = await _unitOfWork.ServicePlans.GetByIdAsync(dto.PlanId.Value);
+            if (plan != null)
+            {
+                // Simple mockup calculation based on plan, real app should fetch from PlanPrice table
+                // Since this is just a quick demo, we'll keep basePrice as is or use plan info if available.
+            }
+        }
+        
+        order.FinalPrice = basePrice;
+        
+        // Process DiscountCode
+        if (!string.IsNullOrWhiteSpace(dto.DiscountCode))
+        {
+            // Check Promotion
+            var promotions = await _unitOfWork.Promotions.GetAllAsync();
+            var promo = promotions.FirstOrDefault(p => p.Code == dto.DiscountCode && p.IsActive && p.ExpiryDate >= DateTime.UtcNow);
+            
+            if (promo != null)
+            {
+                order.AppliedPromoCode = promo.Code;
+                order.DiscountAmount = basePrice * (promo.DiscountPercentage / 100);
+                order.FinalPrice = basePrice - order.DiscountAmount;
+            }
+            else
+            {
+                // Check Affiliate Code
+                var affiliates = await _unitOfWork.AffiliateApplications.GetAllAsync();
+                var affiliate = affiliates.FirstOrDefault(a => a.AffiliateCode == dto.DiscountCode && a.Status == OrderStatus.Completed);
+                
+                if (affiliate != null)
+                {
+                    var settings = await _unitOfWork.SystemSettings.GetAllAsync();
+                    var setting = settings.FirstOrDefault(s => s.Key == "AffiliateDiscountRate");
+                    var discountStr = setting?.Value ?? "10";
+                    if (!decimal.TryParse(discountStr, out var discountPercentage)) discountPercentage = 10;
+
+                    order.AppliedAffiliateCode = affiliate.AffiliateCode;
+                    order.AffiliateId = affiliate.Id;
+                    order.DiscountAmount = basePrice * (discountPercentage / 100);
+                    order.FinalPrice = basePrice - order.DiscountAmount;
+                }
+            }
+        }
+        
+        // Tự động cấp phát nếu là khách hàng đã đăng nhập (có CustomerId)
+        if (dto.CustomerId.HasValue && dto.PlanId.HasValue)
+        {
+            order.Status = OrderStatus.Completed;
+            
+            // 1. Khởi tạo Máy chủ ảo (CustomerService)
+            var customerService = new CustomerService
+            {
+                Id = Guid.NewGuid(),
+                CustomerId = dto.CustomerId.Value,
+                PlanId = dto.PlanId.Value,
+                Name = dto.ServiceName,
+                IpAddress = $"103.19.{Random.Shared.Next(1, 255)}.{Random.Shared.Next(1, 255)}",
+                Os = "Ubuntu 24.04 LTS",
+                Status = CustomerServiceStatus.Running,
+                CpuUsage = Random.Shared.Next(1, 15),
+                RamUsage = Random.Shared.Next(10, 45),
+                ExpiresAt = dto.BillingCycle == BillingCycle.Monthly ? DateTime.UtcNow.AddMonths(1) : DateTime.UtcNow.AddYears(1)
+            };
+            await _unitOfWork.CustomerServices.AddAsync(customerService);
+
+            // 2. Tạo Hóa đơn (Invoice)
+            var amount = dto.BillingCycle == BillingCycle.Yearly ? 1500000m : 150000m;
+
+            var invoice = new Invoice
+            {
+                InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}",
+                CustomerId = dto.CustomerId.Value,
+                Amount = amount,
+                Status = InvoiceStatus.Paid,
+                IssueDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(7),
+                PaidDate = DateTime.UtcNow,
+                ServiceId = customerService.Id
+            };
+            await _unitOfWork.Invoices.AddAsync(invoice);
+        }
+        else
+        {
+            // Đơn hàng vãng lai (Liên hệ), đưa vào chờ duyệt
+            order.Status = OrderStatus.New;
+        }
         
         await _unitOfWork.OrderRequests.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();

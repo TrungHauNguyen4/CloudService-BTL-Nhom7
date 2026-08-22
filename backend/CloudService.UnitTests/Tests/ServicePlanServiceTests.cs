@@ -17,7 +17,7 @@ public class ServicePlanServiceTests
     public ServicePlanServiceTests()
     {
         // Khởi tạo các Mock object (Làm giả dữ liệu của UnitOfWork và AutoMapper)
-        _mockUoW = new Mock<IUnitOfWork>();
+        _mockUoW = new Mock<IUnitOfWork> { DefaultValue = DefaultValue.Mock };
         _mockMapper = new Mock<IMapper>();
         // Tiêm các object giả này vào Service thật cần test
         _service = new ServicePlanService(_mockUoW.Object, _mockMapper.Object);
@@ -30,7 +30,8 @@ public class ServicePlanServiceTests
         var plans = new List<ServicePlan> { new() { Name = "VPS Basic" } };
         var dtos = new List<ServicePlanDto> { new() { Name = "VPS Basic" } };
         
-        _mockUoW.Setup(u => u.ServicePlans.GetAllAsync()).ReturnsAsync(plans);
+        _mockUoW.Setup(u => u.ServicePlans.GetAllWithDetailsAsync()).ReturnsAsync(plans);
+        _mockUoW.Setup(u => u.CustomerServices.GetAllAsync()).ReturnsAsync(new List<CustomerService>());
         _mockMapper.Setup(m => m.Map<IEnumerable<ServicePlanDto>>(plans)).Returns(dtos);
 
         // Act (Hành động)
@@ -44,7 +45,7 @@ public class ServicePlanServiceTests
     [Fact] // Test 2: Nếu truyền ID không tồn tại thì phải trả về Null
     public async Task GetByIdAsync_WhenNotFound_ShouldReturnNull()
     {
-        _mockUoW.Setup(u => u.ServicePlans.GetByIdAsync(It.IsAny<Guid>()))
+        _mockUoW.Setup(u => u.ServicePlans.GetByIdWithDetailsAsync(It.IsAny<Guid>()))
                 .ReturnsAsync((ServicePlan?)null);
         
         var result = await _service.GetByIdAsync(Guid.NewGuid());
@@ -58,7 +59,7 @@ public class ServicePlanServiceTests
         var plan = new ServicePlan { Name = "VPS Pro" };
         var dto = new ServicePlanDto { Name = "VPS Pro" };
         
-        _mockUoW.Setup(u => u.ServicePlans.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(plan);
+        _mockUoW.Setup(u => u.ServicePlans.GetByIdWithDetailsAsync(It.IsAny<Guid>())).ReturnsAsync(plan);
         _mockMapper.Setup(m => m.Map<ServicePlanDto>(plan)).Returns(dto);
 
         var result = await _service.GetByIdAsync(Guid.NewGuid());

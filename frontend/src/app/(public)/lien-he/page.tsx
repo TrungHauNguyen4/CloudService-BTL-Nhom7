@@ -1,13 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import apiClient from '@/lib/axios';
 
-export default function ContactPage() {
+function ContactForm() {
+  const searchParams = useSearchParams();
+  const planQuery = searchParams.get('plan');
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('Tư vấn dịch vụ Cloud Server');
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(planQuery ? `Tôi muốn nhận tư vấn về gói dịch vụ: ${planQuery}` : '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -19,12 +23,12 @@ export default function ContactPage() {
     setSuccess(false);
 
     try {
-      await apiClient.post('/public/orders', {
+      await apiClient.post('/order-requests', {
         customerName: name,
         email: email,
         phone: '000000000',
-        serviceName: subject,
-        planId: '00000000-0000-0000-0000-000000000000', // Placeholder
+        serviceName: subject + ' - ' + content,
+        planId: null,
         billingCycle: 'Monthly',
       });
       setSuccess(true);
@@ -196,5 +200,13 @@ export default function ContactPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen pt-32 flex justify-center"><div className="w-10 h-10 border-4 border-blue-600 rounded-full animate-spin border-t-transparent"></div></div>}>
+      <ContactForm />
+    </Suspense>
   );
 }

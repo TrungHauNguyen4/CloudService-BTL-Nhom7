@@ -7,70 +7,106 @@ import apiClient from '@/lib/axios';
 export default function PricingPage() {
   const [isYearly, setIsYearly] = useState(false);
 
-  // Đưa dữ liệu vào mảng để dễ dàng thêm gói, đổi giá hoặc làm tính năng "Thanh toán hàng năm" sau này
-      const [pricingPlans, setPricingPlans] = useState<any[]>([]);
+  const [allPlans, setAllPlans] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string>('vps');
   const [loading, setLoading] = useState(true);
+  const [yearlyDiscountRate, setYearlyDiscountRate] = useState(17);
+  const [promoCode, setPromoCode] = useState<string | null>(null);
   
-  const [showQrModal, setShowQrModal] = useState(false);
-  const [qrData, setQrData] = useState<any>(null);
-  const [loadingQr, setLoadingQr] = useState(false);
-
-  const handleShowQr = async (planId: string) => {
-    setShowQrModal(true);
-    setLoadingQr(true);
-    setQrData(null);
-    try {
-      const res = await fetch("http://localhost:5000/api/service-plans/" + planId + "/qr");
-      if (res.ok) {
-        const data = await res.json();
-        setQrData(data);
-      } else {
-        alert("Không thể tải mã QR lúc này.");
-        setShowQrModal(false);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Lỗi kết nối.");
-      setShowQrModal(false);
-    } finally {
-      setLoadingQr(false);
-    }
-  };
-
   useEffect(() => {
-    fetch("http://localhost:5000/api/service-plans")
-      .then(res => res.json())
-      .then(data => {
-        // Map data from API to frontend structure
-        const mapped = data.map((plan: any, index: number) => {
-          // Parse specs assuming format "X vCPU / Y RAM / Z SSD"
-          const specsParts = plan.specs ? plan.specs.split(' / ') : [];
-          const cpu = specsParts[0] || '1 vCPU';
-          const ram = specsParts[1] || '2GB RAM';
-          const storage = specsParts[2] || '40GB SSD';
-          
-          // Generate dummy price based on index
-          const basePrice = (index + 1) * 150000;
-          
-          return {
-            id: plan.id,
-            name: plan.name,
-            desc: plan.description || 'Giải pháp Cloud tối ưu cho mọi nhu cầu.',
-            price: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(basePrice),
-            priceYear: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(basePrice * 10),
-            priceRaw: basePrice,
-            cpu,
-            ram,
-            storage,
-            features: ['Băng thông Không giới hạn', 'Hỗ trợ kỹ thuật 24/7', 'Tự động Backup'],
-            isPopular: index === 1
-          };
+    Promise.all([
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023/api'}/service-plans`).then(res => res.json()),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023/api'}/public/settings`).then(res => res.json())
+    ])
+      .then(([plansData, settingsData]) => {
+        const publicSettings = settingsData.settings || {};
+        const discountRate = parseInt(publicSettings['YearlyDiscountRate'] || '17');
+        setYearlyDiscountRate(discountRate);
+        
+        const promo = settingsData.activePromotion;
+        if (promo) {
+          setPromoCode(promo.code);
+        }
+        
+        setAllPlans(plansData);
+        
+        // Trích xuất danh sách các Category duy nhất
+        const uniqueCats: any[] = [];
+        const catMap = new Map();
+        plansData.forEach((p: any) => {
+          if (p.category && !catMap.has(p.category.slug)) {
+            catMap.set(p.category.slug, true);
+            uniqueCats.push(p.category);
+          }
         });
-        setPricingPlans(mapped);
+        setCategories(uniqueCats);
+        
+        // Đọc tham số category từ URL (nếu có)
+        let defaultCategory = 'vps';
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          const catParam = params.get('category');
+          if (catParam && uniqueCats.some(c => c.slug === catParam)) {
+            defaultCategory = catParam;
+          } else if (uniqueCats.length > 0 && !uniqueCats.some(c => c.slug === 'vps')) {
+            defaultCategory = uniqueCats[0].slug;
+          }
+        }
+        setActiveCategory(defaultCategory);
       })
       .catch(err => console.error("Error fetching plans:", err))
       .finally(() => setLoading(false));
   }, []);
+
+  // Tính toán dữ liệu hiển thị dựa trên Tab đang chọn
+  const filteredPlans = allPlans.filter((p: any) => p.category?.slug === activeCategory);
+  
+  let maxCount = -1;
+  let popularPlanId: string | null = null;
+  filteredPlans.forEach((plan: any) => {
+    const count = plan.registrationCount || 0;
+    if (count > maxCount) {
+      maxCount = count;
+      popularPlanId = plan.id;
+    }
+  });
+
+  const pricingPlans = filteredPlans.map((plan: any, index: number) => {
+    let cpu = '', ram = '', storage = '';
+    let features: string[] = [];
+    
+    if (plan.specs) {
+      if (plan.specs.includes(' / ')) {
+        const parts = plan.specs.split(' / ');
+        cpu = parts[0] || '';
+        ram = parts[1] || '';
+        storage = parts[2] || '';
+        features = ['Băng thông Không giới hạn', 'Hỗ trợ kỹ thuật 24/7', 'Tự động Backup'];
+      } else {
+        features = plan.specs.split('\n').map((s: string) => s.trim()).filter(Boolean);
+      }
+    } else {
+      features = ['Dịch vụ tối ưu', 'Hỗ trợ kỹ thuật 24/7'];
+    }
+    
+    const basePrice = plan.monthlyPrice || 0;
+    const discountedYearlyPrice = basePrice * 12 * (1 - yearlyDiscountRate / 100);
+    
+    return {
+      id: plan.id,
+      name: plan.name,
+      desc: plan.description || 'Giải pháp tối ưu cho mọi nhu cầu.',
+      price: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(basePrice),
+      priceYear: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(discountedYearlyPrice),
+      priceRaw: basePrice,
+      cpu,
+      ram,
+      storage,
+      features,
+      isPopular: (maxCount > 0) ? (plan.id === popularPlanId) : (index === 1)
+    };
+  });
 
   return (
     <main className="min-h-screen bg-slate-50 pt-24 pb-32 px-6 sm:px-8 font-sans selection:bg-blue-500 selection:text-white">
@@ -91,15 +127,34 @@ export default function PricingPage() {
           </span>
           <button
             onClick={() => setIsYearly(!isYearly)}
-            className={`relative w-14 h-7 rounded-full transition-colors ${isYearly ? 'bg-blue-600' : 'bg-slate-300'}`}
+            className={`relative w-14 h-7 rounded-full transition-colors shrink-0 ${isYearly ? 'bg-blue-600' : 'bg-slate-300'}`}
           >
-            <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${isYearly ? 'translate-x-7' : 'translate-x-0.5'}`} />
+            <span className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-all duration-300 ${isYearly ? 'translate-x-7' : 'translate-x-0'}`} />
           </button>
           <span className={`text-sm font-bold ${isYearly ? 'text-slate-900' : 'text-slate-400'}`}>
             Thanh toán theo Năm
-            <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">-17%</span>
+            <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">-{yearlyDiscountRate}%</span>
           </span>
         </div>
+        
+        {/* TABS CATEGORY */}
+        {categories.length > 1 && (
+          <div className="flex flex-wrap justify-center gap-2 mt-12 mb-4">
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.slug)}
+                className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all duration-300 ${
+                  activeCategory === cat.slug 
+                    ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20' 
+                    : 'bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-slate-200'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* PRICING GRID */}
@@ -125,27 +180,30 @@ export default function PricingPage() {
               <p className="text-slate-500 text-sm h-10">{plan.desc}</p>
             </div>
 
-            <div className="mb-8 flex items-baseline gap-2 border-b border-slate-100 pb-8">
-              <span className="text-5xl font-black text-slate-900">
-                {isYearly ? plan.priceYear : plan.price}
-              </span>
-              <span className="text-slate-500 font-medium">
-                /{isYearly ? 'năm' : 'tháng'}
-              </span>
+            <div className="mb-8 flex flex-col justify-center border-b border-slate-100 pb-8 min-h-[120px]">
+              {isYearly && (
+                <div className="text-slate-400 font-medium line-through decoration-rose-500/50 decoration-2 text-lg mb-1">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.priceRaw * 12)}/năm
+                </div>
+              )}
+              <div className="flex items-baseline gap-2">
+                <span className="text-5xl font-black text-slate-900">
+                  {isYearly ? plan.priceYear : plan.price}
+                </span>
+                <span className="text-slate-500 font-medium">
+                  /{isYearly ? 'năm' : 'tháng'}
+                </span>
+              </div>
             </div>
 
             {/* Thông số cốt lõi */}
-            <div className="grid grid-cols-3 gap-2 mb-8 text-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <div>
-                <p className="text-slate-900 font-bold">{plan.cpu}</p>
+            {(plan.cpu || plan.ram || plan.storage) && (
+              <div className="grid grid-cols-3 gap-2 mb-8 text-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                {plan.cpu && <div><p className="text-slate-900 font-bold">{plan.cpu}</p></div>}
+                {plan.ram && <div className="border-x border-slate-200"><p className="text-slate-900 font-bold">{plan.ram}</p></div>}
+                {plan.storage && <div><p className="text-slate-900 font-bold">{plan.storage}</p></div>}
               </div>
-              <div className="border-x border-slate-200">
-                <p className="text-slate-900 font-bold">{plan.ram}</p>
-              </div>
-              <div>
-                <p className="text-slate-900 font-bold">{plan.storage}</p>
-              </div>
-            </div>
+            )}
 
             {/* Danh sách tính năng */}
             <ul className="space-y-4 mb-10 flex-grow">
@@ -163,7 +221,7 @@ export default function PricingPage() {
 
             {/* Nút Call to Action */}
             <Link 
-              href={`/thanh-toan?plan=${plan.id}`} 
+              href={`/thanh-toan?plan=${plan.id}&cycle=${isYearly ? '12' : '1'}${promoCode ? `&promo=${promoCode}` : ''}`} 
               className={`mt-auto w-full block text-center py-4 rounded-2xl font-bold transition-all duration-300 ${
                 plan.isPopular 
                   ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/30' 
@@ -176,40 +234,6 @@ export default function PricingPage() {
         ))}
       </div>
     
-      {/* QR MODAL */}
-      {showQrModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl relative">
-            <button 
-              onClick={() => setShowQrModal(false)}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-            <h3 className="text-xl font-bold text-slate-900 mb-2 text-center">Thanh toán Momo / VNPay</h3>
-            <p className="text-slate-500 text-sm text-center mb-6">Sử dụng ứng dụng ngân hàng để quét mã QR bên dưới.</p>
-            
-            <div className="flex justify-center items-center min-h-[250px] bg-slate-50 rounded-2xl border border-slate-100 p-4">
-              {loadingQr ? (
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-                  <span className="text-sm font-medium text-slate-500">Đang sinh mã QR...</span>
-                </div>
-              ) : qrData ? (
-                <div className="text-center">
-                  <img src={qrData.qrImage} alt="QR Code" className="w-48 h-48 mx-auto rounded-lg shadow-sm mb-4" />
-                  <p className="font-bold text-blue-600">{qrData.planName}</p>
-                  <p className="text-lg font-black text-slate-900 mt-1">
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(qrData.price)}
-                  </p>
-                </div>
-              ) : (
-                <div className="text-red-500 text-sm font-medium">Không thể hiển thị mã QR</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

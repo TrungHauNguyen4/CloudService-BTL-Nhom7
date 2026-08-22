@@ -1,23 +1,24 @@
-﻿import { ReactNode } from "react";
+"use client";
+
+import { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import LogoutButton from "./LogoutButton";
 import { 
   LayoutDashboard, 
   Server, 
   ShoppingCart, 
-  Users, 
+  Users,
+  Contact,
   Settings,
   Bell,
   Search,
   Newspaper,
   PieChart,
   History,
-  Tag
+  Tag,
+  Home
 } from "lucide-react";
-
-export const metadata = {
-  title: "Admin Dashboard - Cloud Service",
-  description: "Quản trị hệ thống Cloud Service",
-};
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
@@ -33,14 +34,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <NavItem href="/admin/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
           <NavItem href="/admin/services" icon={<Server size={20} />} label="Gói Cloud" />
           <NavItem href="/admin/orders" icon={<ShoppingCart size={20} />} label="Đơn Hàng" />
-          <NavItem href="/admin/affiliates" icon={<Users size={20} />} label="Đối Tác (Affiliate)" />
+          <NavItem href="/admin/accounts" icon={<Contact size={20} />} label="Tài Khoản" />
+          <NavItem href="/admin/customers" icon={<Users size={20} />} label="Khách Hàng" />
           <NavItem href="/admin/news" icon={<Newspaper size={20} />} label="Tin Tức" />
           <NavItem href="/admin/promotions" icon={<Tag size={20} />} label="Khuyến Mãi" />
           <NavItem href="/admin/analytics" icon={<PieChart size={20} />} label="Thống Kê" />
           <NavItem href="/admin/audit-logs" icon={<History size={20} />} label="Nhật Ký Hệ Thống" />
         </nav>
         
-        <div className="p-4 border-t border-border shrink-0">
+        <div className="p-4 border-t border-border shrink-0 flex flex-col gap-1">
+          <NavItem href="/" icon={<Home size={20} />} label="Về Trang Chủ" />
           <NavItem href="/admin/settings" icon={<Settings size={20} />} label="Cài Đặt" />
         </div>
       </aside>
@@ -71,6 +74,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <span className="text-sm font-medium leading-none">Administrator</span>
                 <span className="text-xs text-muted-foreground mt-1">Hệ thống</span>
               </div>
+              <LogoutButton />
             </div>
           </div>
         </header>
@@ -87,13 +91,22 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 }
 
 function NavItem({ href, icon, label }: { href: string; icon: ReactNode; label: string }) {
+  const pathname = usePathname();
+  const isActive = href === '/admin/dashboard' 
+    ? pathname === '/admin/dashboard'
+    : (pathname === href || (href !== '/' && pathname.startsWith(href)));
+
   return (
     <Link 
       href={href} 
-      className="flex items-center space-x-3 px-3 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all group"
+      className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-all group ${
+        isActive 
+          ? "bg-primary text-primary-foreground font-bold shadow-md" 
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      }`}
     >
-      <span className="group-hover:text-primary transition-colors">{icon}</span>
-      <span className="font-medium text-sm">{label}</span>
+      <span className={`${isActive ? "text-primary-foreground" : "group-hover:text-primary transition-colors"}`}>{icon}</span>
+      <span className={isActive ? "font-bold text-sm" : "font-medium text-sm"}>{label}</span>
     </Link>
   );
 }

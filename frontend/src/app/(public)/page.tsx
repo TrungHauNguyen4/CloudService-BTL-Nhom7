@@ -1,22 +1,48 @@
 import Link from 'next/link';
 
+
 export default async function PublicHomePage() {
-  // Dữ liệu tĩnh được đưa vào mảng giúp file gọn gàng và siêu dễ bảo trì
-  const stats = [
+  let stats = [
     { label: 'Cam kết Uptime', value: '99.99%', suffix: '' },
-    { label: 'Khách hàng tin dùng', value: '5,000', suffix: '+' },
+    { label: 'Khách hàng tin dùng', value: '1,000', suffix: '+' },
     { label: 'Hỗ trợ kỹ thuật', value: '24/7', suffix: '' },
-    { label: 'Băng thông tối đa', value: '10', suffix: ' Gbps' },
+    { label: 'Dịch vụ đã bán', value: '5,000', suffix: '+' },
   ];
 
-    let categories = [];
   try {
-    const res = await fetch("http://localhost:5000/api/service-categories", { next: { revalidate: 60 } });
+    const statRes = await fetch(`${process.env.API_URL || 'http://localhost:5023/api'}/public/stats`, { next: { revalidate: 60 } });
+    if (statRes.ok) {
+      const data = await statRes.json();
+      stats = [
+        { label: 'Cam kết Uptime', value: data.uptimeSla, suffix: '' },
+        { label: 'Khách hàng tin dùng', value: data.totalCustomers, suffix: '+' },
+        { label: 'Hỗ trợ kỹ thuật', value: '24/7', suffix: '' },
+        { label: 'Dịch vụ đã bán', value: data.totalServices, suffix: '+' },
+      ];
+    }
+  } catch (err) {
+    console.error("Lỗi tải stats:", err);
+  }
+
+  let categories = [];
+  try {
+    const res = await fetch(`${process.env.API_URL || 'http://localhost:5023/api'}/service-categories`, { next: { revalidate: 60 } });
     if (res.ok) {
       categories = await res.json();
     }
   } catch (error) {
     console.error("Failed to fetch categories", error);
+  }
+
+  let topNews = [];
+  try {
+    const res = await fetch(`${process.env.API_URL || 'http://localhost:5023/api'}/public/news?page=1&pageSize=3`, { next: { revalidate: 60 } });
+    if (res.ok) {
+      const data = await res.json();
+      topNews = Array.isArray(data) ? data : (data.items || []);
+    }
+  } catch (error) {
+    console.error("Failed to fetch news", error);
   }
 
   const getCategoryColor = (slug: string) => {
@@ -200,21 +226,24 @@ export default async function PublicHomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {services.map((srv: any, idx: number) => (
-            <div key={idx} className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 hover:-translate-y-3 relative overflow-hidden">
-              <div className={`absolute top-0 left-0 w-full h-1 bg-${srv.color}-500 opacity-0 group-hover:opacity-100 transition-opacity`}></div>
-              <div className={`w-16 h-16 bg-${srv.color}-50 text-${srv.color}-600 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 group-hover:bg-${srv.color}-600 group-hover:text-white transition-all duration-500 shadow-sm`}>
-                {srv.icon}
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">{srv.title}</h3>
-              <p className="text-slate-500 leading-relaxed mb-6 font-medium">
-                {srv.desc}
-              </p>
-              <div className={`inline-flex items-center text-${srv.color}-600 font-bold group-hover:translate-x-2 transition-transform cursor-pointer`}>
-                Tìm hiểu thêm <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
-              </div>
-            </div>
-          ))}
+          {services.map((srv: any, idx: number) => {
+            const catSlug = categories.length > 0 ? categories[idx].slug : (idx === 0 ? 'vps' : idx === 1 ? 'hosting' : 'domain');
+            return (
+              <Link href={`/bang-gia?category=${catSlug}`} key={idx} className="block group bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 hover:-translate-y-3 relative overflow-hidden">
+                <div className={`absolute top-0 left-0 w-full h-1 bg-${srv.color}-500 opacity-0 group-hover:opacity-100 transition-opacity`}></div>
+                <div className={`w-16 h-16 bg-${srv.color}-50 text-${srv.color}-600 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 group-hover:bg-${srv.color}-600 group-hover:text-white transition-all duration-500 shadow-sm`}>
+                  {srv.icon}
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-4">{srv.title}</h3>
+                <p className="text-slate-500 leading-relaxed mb-6 font-medium">
+                  {srv.desc}
+                </p>
+                <div className={`inline-flex items-center text-${srv.color}-600 font-bold group-hover:translate-x-2 transition-transform cursor-pointer`}>
+                  Tìm hiểu thêm <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
@@ -254,7 +283,56 @@ export default async function PublicHomePage() {
         </div>
       </section>
 
-      
+      {/* 6. LATEST NEWS SECTION */}
+      {topNews.length > 0 && (
+        <section className="py-24 px-6 sm:px-8 max-w-7xl mx-auto w-full">
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">
+                Tin Tức Mới Nhất
+              </h2>
+              <p className="text-slate-500 text-lg">Cập nhật công nghệ và thông báo từ hệ thống.</p>
+            </div>
+            <Link href="/tin-tuc" className="hidden md:flex items-center text-blue-600 font-bold hover:text-blue-700 transition-colors">
+              Xem tất cả <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {topNews.map((article: any) => (
+              <Link key={article.id} href={`/tin-tuc/${article.slug}`} className="group bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col">
+                <div className="h-48 bg-gradient-to-br from-slate-100 to-slate-200 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-slate-800/5 group-hover:bg-slate-800/0 transition-colors" />
+                  <div className="absolute bottom-4 left-4">
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-white/90 text-slate-800 shadow-sm backdrop-blur-sm">
+                      {article.category}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-6 flex flex-col flex-grow">
+                  <h3 className="text-lg font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
+                    {article.title}
+                  </h3>
+                  <p className="text-slate-500 text-sm leading-relaxed mb-6 flex-grow line-clamp-3">
+                    {article.content}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-slate-400 pt-4 border-t border-slate-100">
+                    <span className="font-semibold">{article.authorName}</span>
+                    <span>
+                      {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('vi-VN') : ''}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-8 text-center md:hidden">
+            <Link href="/tin-tuc" className="inline-flex items-center text-blue-600 font-bold hover:text-blue-700 transition-colors">
+              Xem tất cả <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+            </Link>
+          </div>
+        </section>
+      )}
 
     </main>
   );

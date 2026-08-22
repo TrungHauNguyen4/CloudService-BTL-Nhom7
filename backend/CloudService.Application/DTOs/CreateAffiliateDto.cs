@@ -5,4 +5,5 @@ public class CreateAffiliateDto
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
     public string? Website { get; set; }
+    public Guid? AppUserId { get; set; }
 }

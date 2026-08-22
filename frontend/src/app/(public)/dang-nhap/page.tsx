@@ -1,6 +1,60 @@
-import Link from 'next/link';
+'use client';
 
-export default function LoginPage() {
+import { Suspense, useState } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Cookies from 'js-cookie';
+import apiClient from '@/lib/axios';
+import { Loader2 } from 'lucide-react';
+
+import { useAuth } from '@/contexts/AuthContext';
+
+function LoginContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { user, login: contextLogin, logout: contextLogout } = useAuth();
+  const [showOverlapModal, setShowOverlapModal] = useState(false);
+
+  // Hiển thị modal nếu user đã đăng nhập
+  if (user && !showOverlapModal) {
+    setShowOverlapModal(true);
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await apiClient.post('/auth/login', { email, password });
+      if (response.data.token) {
+        contextLogin(response.data.token);
+        
+        try {
+          const payload = JSON.parse(atob(response.data.token.split('.')[1]));
+          const role = payload["role"] || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+          
+          if (role === 'Admin') {
+            router.push(redirectUrl || '/admin/dashboard');
+          } else {
+            router.push(redirectUrl || '/dashboard');
+          }
+        } catch {
+          router.push(redirectUrl || '/dashboard');
+        }
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại kết nối Backend.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen flex bg-white font-sans selection:bg-blue-500 selection:text-white">
       
@@ -66,13 +120,21 @@ export default function LoginPage() {
             <div className="flex-grow border-t border-slate-200"></div>
           </div>
 
+          {error && (
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-sm font-medium">
+              {error}
+            </div>
+          )}
+
           {/* Traditional Form */}
-          <form className="space-y-5">
+          <form className="space-y-5" onSubmit={handleLogin}>
             <div className="space-y-2">
               <label className="block text-sm font-bold text-slate-700">Tài khoản Email</label>
               <input 
                 type="email" 
                 required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
                 className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm text-slate-800" 
                 placeholder="name@company.com" 
               />
@@ -86,16 +148,20 @@ export default function LoginPage() {
               <input 
                 type="password" 
                 required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
                 className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm text-slate-800" 
                 placeholder="••••••••" 
               />
             </div>
 
             <button 
-              type="button" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform hover:-translate-y-0.5 mt-2"
+              type="submit" 
+              disabled={isLoading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform hover:-translate-y-0.5 mt-2 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
             >
-              Đăng Nhập
+              {isLoading && <Loader2 className="w-5 h-5 animate-spin" />}
+              {isLoading ? 'Đang Đăng Nhập...' : 'Đăng Nhập'}
             </button>
           </form>
 
@@ -109,6 +175,46 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* Overlap Login Modal */}
+      {showOverlapModal && user && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Đã đăng nhập</h3>
+            <p className="text-sm text-slate-600 mb-6">
+              Hệ thống phát hiện bạn đang đăng nhập với tài khoản <strong>{user.name}</strong> ({user.role}). Bạn có muốn đăng xuất để chuyển sang tài khoản khác không?
+            </p>
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={() => {
+                  contextLogout();
+                  setShowOverlapModal(false);
+                }}
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-2xl transition-colors"
+              >
+                Đăng xuất tài khoản cũ
+              </button>
+              <button 
+                onClick={() => {
+                  if (user.role === 'Admin') router.push('/admin/dashboard');
+                  else router.push('/dashboard');
+                }}
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl transition-colors"
+              >
+                Trở về Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
