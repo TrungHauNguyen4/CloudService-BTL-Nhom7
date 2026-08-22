@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Cookies from 'js-cookie';
@@ -9,7 +9,7 @@ import { Loader2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect');
@@ -208,5 +208,13 @@ export default function LoginPage() {
       )}
 
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

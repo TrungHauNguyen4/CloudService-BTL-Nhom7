@@ -1,6 +1,5 @@
 import Link from 'next/link';
 
-import apiClient from '@/utils/apiClient';
 
 export default async function PublicHomePage() {
   let stats = [
