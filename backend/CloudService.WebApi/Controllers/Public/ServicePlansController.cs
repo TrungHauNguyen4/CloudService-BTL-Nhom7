@@ -38,7 +38,7 @@ public class ServicePlansController : ControllerBase
         if (plan == null) return NotFound();
 
         // Giả lập thông tin thanh toán Momo/VNPay
-        var paymentText = $"MOMO|0987654321|{plan.Prices.FirstOrDefault()?.MonthlyPrice ?? 0}|Thanh toan goi {plan.Name}";
+        var paymentText = $"MOMO|0987654321|{100000}|Thanh toan goi {plan.Name}";
         
         var qrBase64 = _qrCodeService.GenerateQrCodeBase64(paymentText);
         
@@ -46,7 +46,8 @@ public class ServicePlansController : ControllerBase
         return Ok(new { 
             qrImage = $"data:image/png;base64,{qrBase64}",
             planName = plan.Name,
-            price = plan.Prices.FirstOrDefault()?.MonthlyPrice ?? 0
+            price = 100000
         });
     }
 }
+
