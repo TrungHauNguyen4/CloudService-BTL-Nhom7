@@ -38,6 +38,16 @@ public class OrderService : IOrderService
         return _mapper.Map<IEnumerable<OrderDto>>(orders);
     }
 
+    public async Task<IEnumerable<OrderDto>> GetAllOrdersAsync(
+        OrderStatus? status)
+    {
+        var orders = await _unitOfWork
+            .OrderRequests
+            .GetAllByStatusAsync(status);
+
+        return _mapper.Map<IEnumerable<OrderDto>>(orders);
+    }
+
     public async Task<bool> UpdateOrderStatusAsync(Guid orderId, OrderStatus newStatus)
     {
         var order = await _unitOfWork.OrderRequests.GetByIdAsync(orderId);

@@ -24,7 +24,7 @@ public class AffiliateService : IAffiliateService
         var application = _mapper.Map<AffiliateApplication>(dto);
         application.Status = OrderStatus.New; // Mặc định là đơn mới
         
-        await _unitOfWork.AffiliateApplication.AddAsync(application);
+        await _unitOfWork.AffiliateApplications.AddAsync(application);
         await _unitOfWork.SaveChangesAsync();
         return true;
     }

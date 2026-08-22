@@ -1,4 +1,4 @@
-using CloudService.Domain.Interfaces;
+﻿using CloudService.Domain.Interfaces;
 using CloudService.Infrastructure.Data;
 
 namespace CloudService.Infrastructure.Repositories;
@@ -11,8 +11,10 @@ public class UnitOfWork : IUnitOfWork
     public IServicePlanRepository ServicePlans { get; }
     public INewsArticleRepository NewsArticles { get; }
     public IOrderRequestRepository OrderRequests { get; }
-    public IAffiliateApplicationRepository AffiliateApplication { get; }
-
+    public IAffiliateApplicationRepository AffiliateApplications { get; }
+    public IAppUserRepository AppUsers { get; }
+    public IAuditLogRepository AuditLogs { get; }
+    public IPromotionRepository Promotions { get; }
     public UnitOfWork(AppDbContext context)
     {
         _context = context;
@@ -21,7 +23,10 @@ public class UnitOfWork : IUnitOfWork
         ServicePlans = new ServicePlanRepository(context);
         NewsArticles = new NewsArticleRepository(context);
         OrderRequests = new OrderRequestRepository(context);
-        AffiliateApplication = new AffiliateApplicationRepository(context);
+        AffiliateApplications = new AffiliateApplicationRepository(context);
+        AppUsers = new AppUserRepository(context);
+        AuditLogs = new AuditLogRepository(context);
+        Promotions = new PromotionRepository(context);
     }
 
     public async Task<int> SaveChangesAsync()

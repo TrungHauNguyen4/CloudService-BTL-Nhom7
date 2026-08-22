@@ -1,4 +1,4 @@
-using CloudService.Domain.Entities;
+﻿using CloudService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudService.Infrastructure.Data;
@@ -7,90 +7,31 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    // Khai báo DbSet cho mỗi Entity
-    public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();
-    public DbSet<ServicePlan> ServicePlans => Set<ServicePlan>();
-    public DbSet<PlanPrice> PlanPrices => Set<PlanPrice>();
-    public DbSet<Promotion> Promotions => Set<Promotion>();
-    public DbSet<NewsArticle> NewsArticles => Set<NewsArticle>();
-    public DbSet<OrderRequest> OrderRequests => Set<OrderRequest>();
-    public DbSet<AffiliateApplication> AffiliateApplications => Set<AffiliateApplication>();
-    public DbSet<AppUser> AppUsers => Set<AppUser>();
-    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<AppUser> AppUsers { get; set; }
+    public DbSet<ServiceCategory> ServiceCategories { get; set; }
+    public DbSet<ServicePlan> ServicePlans { get; set; }
+    public DbSet<OrderRequest> OrderRequests { get; set; }
+    public DbSet<NewsArticle> NewsArticles { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<AffiliateApplication> AffiliateApplications { get; set; }
+    public DbSet<Promotion> Promotions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // ===== ServiceCategory =====
-        modelBuilder.Entity<ServiceCategory>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Slug).IsRequired().HasMaxLength(150);
-            entity.HasIndex(e => e.Slug).IsUnique();
-        });
-
-        // ===== ServicePlan =====
-        modelBuilder.Entity<ServicePlan>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Slug).IsRequired().HasMaxLength(150);
-            entity.HasIndex(e => e.Slug).IsUnique();
-
-            // Quan hệ: 1 Category -> nhiều Plans
-            entity.HasOne(e => e.Category)
-                  .WithMany(c => c.ServicePlans)
-                  .HasForeignKey(e => e.CategoryId)
-                  .OnDelete(DeleteBehavior.Restrict);
-        });
-
-        // ===== PlanPrice =====
-        modelBuilder.Entity<PlanPrice>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
-            entity.Property(e => e.OriginalPrice).HasColumnType("decimal(18,2)");
-
-            entity.HasOne(e => e.Plan)
-                  .WithMany(p => p.Prices)
-                  .HasForeignKey(e => e.PlanId)
-                  .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        // ===== Promotion =====
         modelBuilder.Entity<Promotion>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.DiscountPercent).HasColumnType("decimal(5,2)");
-
-            entity.HasOne(e => e.Plan)
-                  .WithMany()
-                  .HasForeignKey(e => e.PlanId)
-                  .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        // ===== NewsArticle =====
-        modelBuilder.Entity<NewsArticle>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
-            entity.Property(e => e.Slug).IsRequired().HasMaxLength(250);
-            entity.HasIndex(e => e.Slug).IsUnique();
-
-            entity.HasOne(e => e.Author)
-                  .WithMany(u => u.AuthoredArticles)
-                  .HasForeignKey(e => e.AuthorId)
-                  .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(50);
+            entity.HasIndex(e => e.Code).IsUnique();
         });
 
         // ===== OrderRequest =====
         modelBuilder.Entity<OrderRequest>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Phone).HasMaxLength(20);
+            entity.Property(e => e.CustomerName).IsRequired().HasMaxLength(100);
 
             entity.HasOne(e => e.Customer)
                   .WithMany(u => u.Orders)
@@ -134,32 +75,6 @@ public class AppDbContext : DbContext
 
     private void SeedData(ModelBuilder modelBuilder)
     {
-        // --- Tài khoản demo ---
-        var adminId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        var editorId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-
-/*
-        modelBuilder.Entity<AppUser>().HasData(
-            new AppUser
-            {
-                Id = adminId,
-                Username = "admin",
-                Email = "admin@cloudvn.vn",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
-                Role = Domain.Enums.UserRole.Admin,
-                CreatedAt = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
-            },
-            new AppUser
-            {
-                Id = editorId,
-                Username = "editor",
-                Email = "editor@cloudvn.vn",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Editor@123"),
-                Role = Domain.Enums.UserRole.Editor,
-                CreatedAt = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
-            }
-        );
-*/
         // --- Danh mục dịch vụ ---
         var catVps = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
         var catHosting = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");

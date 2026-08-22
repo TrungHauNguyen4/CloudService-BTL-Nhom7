@@ -1,4 +1,5 @@
-using CloudService.Application.Interfaces;
+﻿using CloudService.Application.Interfaces;
+using CloudService.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CloudService.WebApi.Controllers.Public;
@@ -8,9 +9,13 @@ namespace CloudService.WebApi.Controllers.Public;
 public class ServicePlansController : ControllerBase
 {
     private readonly IServicePlanService _service;
+    private readonly QrCodeService _qrCodeService;
 
-    public ServicePlansController(IServicePlanService service)
-        => _service = service;
+    public ServicePlansController(IServicePlanService service, QrCodeService qrCodeService)
+    {
+        _service = service;
+        _qrCodeService = qrCodeService;
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -25,4 +30,24 @@ public class ServicePlansController : ControllerBase
             ? NotFound()
             : Ok(plan);
     }
+
+    [HttpGet("{id:guid}/qr")]
+    public async Task<IActionResult> GetQrCode(Guid id)
+    {
+        var plan = await _service.GetByIdAsync(id);
+        if (plan == null) return NotFound();
+
+        // Giả lập thông tin thanh toán Momo/VNPay
+        var paymentText = $"MOMO|0987654321|{100000}|Thanh toan goi {plan.Name}";
+        
+        var qrBase64 = _qrCodeService.GenerateQrCodeBase64(paymentText);
+        
+        // Trả về HTML Image tag hoặc JSON chứa Base64 (tùy frontend xử lý, ở đây trả về JSON để frontend hiển thị dạng src="data:image/png;base64,...")
+        return Ok(new { 
+            qrImage = $"data:image/png;base64,{qrBase64}",
+            planName = plan.Name,
+            price = 100000
+        });
+    }
 }
+

@@ -48,4 +48,50 @@ public class ServicePlanService : IServicePlanService
         // Trả về dữ liệu vừa lưu
         return _mapper.Map<ServicePlanDto>(planEntity);
     }
+    public async Task<ServicePlanDto?> UpdateAsync(
+        Guid id,
+        CreateServicePlanDto updateDto)
+    {
+        var plan = await _unitOfWork.ServicePlans.GetByIdAsync(id);
+
+        if (plan == null)
+        {
+            return null;
+        }
+
+        plan.Name = updateDto.Name;
+        plan.CategoryId = updateDto.CategoryId;
+        plan.Specs = updateDto.Specs;
+        plan.IsActive = updateDto.IsActive;
+
+        // Cập nhật lại Slug khi đổi tên
+        plan.Slug = updateDto.Name
+            .Trim()
+            .ToLower()
+            .Replace(" ", "-");
+
+        plan.UpdatedAt = DateTime.UtcNow;
+
+        _unitOfWork.ServicePlans.Update(plan);
+
+        await _unitOfWork.SaveChangesAsync();
+
+        return _mapper.Map<ServicePlanDto>(plan);
+    }
+
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        var plan = await _unitOfWork.ServicePlans.GetByIdAsync(id);
+
+        if (plan == null)
+        {
+            return false;
+        }
+
+        _unitOfWork.ServicePlans.Delete(plan);
+
+        await _unitOfWork.SaveChangesAsync();
+
+        return true;
+    }
 }

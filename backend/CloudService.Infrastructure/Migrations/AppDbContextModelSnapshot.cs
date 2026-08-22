@@ -80,6 +80,12 @@ namespace CloudService.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiryTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("Role")
                         .HasColumnType("int");
 
@@ -164,13 +170,11 @@ namespace CloudService.Infrastructure.Migrations
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -178,9 +182,6 @@ namespace CloudService.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");
-
-                    b.HasIndex("Slug")
-                        .IsUnique();
 
                     b.ToTable("NewsArticles");
                 });
@@ -202,17 +203,16 @@ namespace CloudService.Infrastructure.Migrations
 
                     b.Property<string>("CustomerName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Phone")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("PlanId")
                         .HasColumnType("uniqueidentifier");
@@ -264,7 +264,7 @@ namespace CloudService.Infrastructure.Migrations
 
                     b.HasIndex("PlanId");
 
-                    b.ToTable("PlanPrices");
+                    b.ToTable("PlanPrice");
                 });
 
             modelBuilder.Entity("CloudService.Domain.Entities.Promotion", b =>
@@ -273,30 +273,30 @@ namespace CloudService.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal>("DiscountPercent")
-                        .HasColumnType("decimal(5,2)");
+                    b.Property<decimal>("DiscountPercentage")
+                        .HasColumnType("decimal(18,2)");
 
-                    b.Property<DateTime>("EndDate")
+                    b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
-
-                    b.Property<Guid>("PlanId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PlanId");
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.ToTable("Promotions");
                 });
@@ -318,21 +318,16 @@ namespace CloudService.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Slug")
-                        .IsUnique();
 
                     b.ToTable("ServiceCategories");
 
@@ -383,16 +378,14 @@ namespace CloudService.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("QrCodeUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Slug")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Specs")
                         .HasColumnType("nvarchar(max)");
@@ -403,9 +396,6 @@ namespace CloudService.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
-
-                    b.HasIndex("Slug")
-                        .IsUnique();
 
                     b.ToTable("ServicePlans");
 
@@ -517,7 +507,7 @@ namespace CloudService.Infrastructure.Migrations
                     b.HasOne("CloudService.Domain.Entities.AppUser", "Author")
                         .WithMany("AuthoredArticles")
                         .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Author");
@@ -552,23 +542,12 @@ namespace CloudService.Infrastructure.Migrations
                     b.Navigation("Plan");
                 });
 
-            modelBuilder.Entity("CloudService.Domain.Entities.Promotion", b =>
-                {
-                    b.HasOne("CloudService.Domain.Entities.ServicePlan", "Plan")
-                        .WithMany()
-                        .HasForeignKey("PlanId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Plan");
-                });
-
             modelBuilder.Entity("CloudService.Domain.Entities.ServicePlan", b =>
                 {
                     b.HasOne("CloudService.Domain.Entities.ServiceCategory", "Category")
                         .WithMany("ServicePlans")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Category");
