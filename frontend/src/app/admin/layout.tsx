@@ -1,5 +1,6 @@
-﻿import { ReactNode } from "react";
+import { ReactNode } from "react";
 import Link from "next/link";
+import LogoutButton from "./LogoutButton";
 import { 
   LayoutDashboard, 
   Server, 
@@ -71,6 +72,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <span className="text-sm font-medium leading-none">Administrator</span>
                 <span className="text-xs text-muted-foreground mt-1">Hệ thống</span>
               </div>
+              <LogoutButton />
             </div>
           </div>
         </header>
