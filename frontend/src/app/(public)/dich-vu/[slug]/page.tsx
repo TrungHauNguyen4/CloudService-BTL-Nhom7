@@ -1,83 +1,75 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import apiClient from '@/lib/axios';
 
-// Dữ liệu chi tiết cho từng dịch vụ (dự phòng)
-const serviceDetails: Record<string, any> = {
-  'cloud-server': {
-    name: 'Cloud Server (VPS)',
-    desc: 'Máy chủ ảo hiệu năng cao với 100% NVMe SSD, cam kết uptime 99.99%.',
-    color: 'blue',
-    plans: [
-      { name: 'VPS Basic', cpu: '1 vCPU', ram: '1GB', ssd: '20GB', bw: '1TB', priceMonth: 150000, priceYear: 1500000 },
-      { name: 'VPS Pro', cpu: '2 vCPU', ram: '4GB', ssd: '60GB', bw: 'Không giới hạn', priceMonth: 350000, priceYear: 3500000 },
-      { name: 'VPS Business', cpu: '4 vCPU', ram: '8GB', ssd: '120GB', bw: 'Không giới hạn', priceMonth: 700000, priceYear: 7000000 },
-      { name: 'VPS Enterprise', cpu: '8 vCPU', ram: '16GB', ssd: '240GB', bw: 'Không giới hạn', priceMonth: 1400000, priceYear: 14000000 },
-    ],
-    features: [
-      'Toàn quyền quản trị root/administrator',
-      'Tự động Snapshot hàng tuần',
-      'Chống DDoS Layer 3/4/7 tích hợp sẵn',
-      'Cài đặt 1-click: WordPress, Docker, Node.js',
-      'Hỗ trợ kỹ thuật 24/7/365',
-      'SLA cam kết 99.99% uptime',
-    ],
-  },
-  'cloud-storage': {
-    name: 'Cloud Storage',
-    desc: 'Lưu trữ Object Storage an toàn, linh hoạt mở rộng lên đến hàng ngàn Terabyte.',
-    color: 'indigo',
-    plans: [
-      { name: 'Storage 100GB', cpu: '-', ram: '-', ssd: '100GB', bw: '500GB', priceMonth: 50000, priceYear: 500000 },
-      { name: 'Storage 500GB', cpu: '-', ram: '-', ssd: '500GB', bw: '2TB', priceMonth: 200000, priceYear: 2000000 },
-      { name: 'Storage 1TB', cpu: '-', ram: '-', ssd: '1TB', bw: '5TB', priceMonth: 380000, priceYear: 3800000 },
-    ],
-    features: [
-      'Cơ chế nhân bản 3 lớp (3-way replica)',
-      'Mã hóa AES-256 tĩnh và truyền tải',
-      'Tương thích chuẩn S3 API',
-      'CDN tích hợp cho tốc độ truy xuất cao',
-      'Versioning tự động cho mỗi file',
-    ],
-  },
-  'cloud-security': {
-    name: 'Cloud Security',
-    desc: 'Bảo vệ toàn diện trước các cuộc tấn công DDoS và mã độc.',
-    color: 'teal',
-    plans: [
-      { name: 'Security Basic', cpu: '-', ram: '-', ssd: '-', bw: '-', priceMonth: 250000, priceYear: 2500000 },
-      { name: 'Security Pro', cpu: '-', ram: '-', ssd: '-', bw: '-', priceMonth: 500000, priceYear: 5000000 },
-    ],
-    features: [
-      'Tường lửa WAF đa lớp',
-      'Chống DDoS tự động Layer 3/4/7',
-      'Quét lỗ hổng bảo mật định kỳ',
-      'Cảnh báo xâm nhập thời gian thực',
-      'SSL/TLS miễn phí',
-    ],
-  },
-  'cloud-database': {
-    name: 'Managed Database',
-    desc: 'Cơ sở dữ liệu được tối ưu sẵn, hỗ trợ MySQL, PostgreSQL, MongoDB.',
-    color: 'rose',
-    plans: [
-      { name: 'DB Starter', cpu: '1 vCPU', ram: '2GB', ssd: '20GB', bw: '-', priceMonth: 300000, priceYear: 3000000 },
-      { name: 'DB Pro', cpu: '2 vCPU', ram: '4GB', ssd: '80GB', bw: '-', priceMonth: 600000, priceYear: 6000000 },
-    ],
-    features: [
-      'Tự động Failover (Chuyển đổi dự phòng)',
-      'Backup tự động mỗi giờ',
-      'Mở rộng không downtime',
-      'Giám sát hiệu năng query',
-    ],
-  },
+// Dữ liệu dự phòng
+const fallbackService = {
+  name: 'Chi tiết Dịch vụ',
+  desc: 'Thông tin chi tiết về dịch vụ đám mây của chúng tôi.',
+  color: 'blue',
+  plans: [],
+  features: [
+    'Toàn quyền quản trị',
+    'Tự động Snapshot hàng tuần',
+    'Chống DDoS Layer 3/4/7 tích hợp sẵn',
+    'Hỗ trợ kỹ thuật 24/7/365',
+    'SLA cam kết 99.99% uptime',
+  ],
 };
 
 export default function ServiceDetailPage() {
   const params = useParams();
-  const slug = params.slug as string;
-  const service = serviceDetails[slug];
+  const id = params.slug as string;
+  const [service, setService] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiClient.get(`/public/service-plans/${id}`)
+      .then(res => {
+        const plan = res.data;
+        // Parse specs to find CPU, RAM, SSD, BW if possible, or use fallback
+        const specsLines = plan.specs ? plan.specs.split('\n') : [];
+        const getSpec = (keyword: string) => specsLines.find((l: string) => l.toLowerCase().includes(keyword)) || '-';
+        
+        // Cố gắng parse monthly/yearly price từ mảng Prices (nếu Backend trả về)
+        // Nếu Backend không trả về mảng Prices, dùng MonthlyPrice từ DTO và tự tính YearlyPrice
+        const priceMonth = plan.monthlyPrice || 0;
+        const priceYear = priceMonth * 10; // Giả sử mua 1 năm tặng 2 tháng
+
+        setService({
+          name: plan.category?.name || 'Gói Dịch vụ',
+          desc: 'Máy chủ ảo hiệu năng cao với 100% NVMe SSD, cam kết uptime 99.99%.',
+          color: 'blue',
+          plans: [
+            { 
+              name: plan.name, 
+              cpu: getSpec('vcore') || getSpec('cpu') || '-', 
+              ram: getSpec('ram') || getSpec('gb') || '-', 
+              ssd: getSpec('ssd') || '-', 
+              bw: getSpec('băng thông') || 'Không giới hạn', 
+              priceMonth: priceMonth, 
+              priceYear: priceYear 
+            }
+          ],
+          features: specsLines.length > 0 ? specsLines : fallbackService.features,
+        });
+      })
+      .catch(() => {
+        setService(null);
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-50 pt-32 flex justify-center">
+        <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+      </main>
+    );
+  }
 
   // Nếu không tìm thấy dịch vụ
   if (!service) {
@@ -113,7 +105,7 @@ export default function ServiceDetailPage() {
 
       {/* BẢNG GIÁ CÁC GÓI */}
       <div className="max-w-6xl mx-auto mb-20">
-        <h2 className="text-2xl font-bold text-slate-900 mb-8">Chọn gói phù hợp</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-8">Chi tiết gói dịch vụ</h2>
         <div className="overflow-x-auto">
           <table className="w-full bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">
             <thead>
@@ -155,7 +147,7 @@ export default function ServiceDetailPage() {
 
       {/* TÍNH NĂNG NỔI BẬT */}
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl font-bold text-slate-900 mb-8">Tính năng nổi bật</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-8">Thông số nổi bật</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {service.features.map((feature: string, idx: number) => (
             <div key={idx} className="flex items-start gap-4 bg-white p-5 rounded-2xl border border-slate-100">

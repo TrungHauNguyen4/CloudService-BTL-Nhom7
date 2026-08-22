@@ -5,13 +5,51 @@ import { Plus, Edit, Trash2, Loader2, QrCode } from "lucide-react";
 import apiClient from "@/lib/axios";
 
 export default function ServicesPage() {
-    const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // States cho QR Modal
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrData, setQrData] = useState<any>(null);
   const [loadingQr, setLoadingQr] = useState(false);
+
+  // States cho CRUD Modal
+  const [showModal, setShowModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    categoryId: "",
+    monthlyPrice: 0,
+    specs: "",
+    isActive: true
+  });
+
+  const fetchServices = async () => {
+    try {
+      const response = await apiClient.get('/admin/service-plans');
+      setServices(response.data);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách gói dịch vụ:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await apiClient.get('/admin/service-categories');
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Lỗi khi tải danh mục:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchServices();
+    fetchCategories();
+  }, []);
 
   const handleShowQr = async (planId: string) => {
     setShowQrModal(true);
@@ -29,20 +67,61 @@ export default function ServicesPage() {
     }
   };
 
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const response = await apiClient.get('/admin/service-plans');
-        setServices(response.data);
-      } catch (error) {
-        console.error("Lỗi khi tải danh sách gói dịch vụ:", error);
-      } finally {
-        setIsLoading(false);
+  const handleDelete = async (id: string) => {
+    if (!confirm("Bạn có chắc muốn xóa gói dịch vụ này?")) return;
+    try {
+      await apiClient.delete(`/admin/service-plans/${id}`);
+      setServices(services.filter(s => s.id !== id));
+    } catch (error) {
+      alert("Xóa thất bại!");
+    }
+  };
+
+  const handleAddNew = () => {
+    setFormData({
+      name: "",
+      categoryId: categories.length > 0 ? categories[0].id : "",
+      monthlyPrice: 0,
+      specs: "",
+      isActive: true
+    });
+    setEditingId(null);
+    setShowModal(true);
+  };
+
+  const handleEdit = (service: any) => {
+    setFormData({
+      name: service.name,
+      categoryId: service.categoryId || (service.category?.id) || "",
+      monthlyPrice: service.monthlyPrice,
+      specs: service.specs || "",
+      isActive: service.isActive
+    });
+    setEditingId(service.id);
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const payload = { ...formData };
+      
+      if (editingId) {
+        await apiClient.put(`/admin/service-plans/${editingId}`, payload);
+      } else {
+        await apiClient.post('/admin/service-plans', payload);
       }
-    };
-    
-    fetchServices();
-  }, []);
+      
+      setShowModal(false);
+      fetchServices();
+      setEditingId(null);
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Thao tác thất bại!");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -51,7 +130,10 @@ export default function ServicesPage() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Gói Dịch Vụ</h1>
           <p className="text-muted-foreground mt-2">Quản lý các gói Cloud Service đang cung cấp.</p>
         </div>
-        <button className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 rounded-lg transition-colors font-medium">
+        <button 
+          onClick={handleAddNew}
+          className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 rounded-lg transition-colors font-medium"
+        >
           <Plus className="w-5 h-5" />
           <span>Thêm Gói Mới</span>
         </button>
@@ -92,7 +174,7 @@ export default function ServicesPage() {
                   >
                     <td className="px-6 py-4 font-medium text-foreground">{service.name}</td>
                     <td className="px-6 py-4 text-muted-foreground">{service.category?.name || 'Không rõ'}</td>
-                    <td className="px-6 py-4 font-semibold text-primary">${service.monthlyPrice}</td>
+                    <td className="px-6 py-4 font-semibold text-primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(service.monthlyPrice)}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                         service.isActive 
@@ -111,10 +193,18 @@ export default function ServicesPage() {
                         >
                           <QrCode className="w-4 h-4" />
                         </button>
-                        <button className="p-1.5 text-muted-foreground hover:text-primary transition-colors">
+                        <button 
+                          onClick={() => handleEdit(service)}
+                          className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+                          title="Sửa"
+                        >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button className="p-1.5 text-muted-foreground hover:text-destructive transition-colors">
+                        <button 
+                          onClick={() => handleDelete(service.id)}
+                          className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
+                          title="Xóa"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -127,6 +217,7 @@ export default function ServicesPage() {
         </div>
       </div>
 
+      {/* QR MODAL */}
       {showQrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-background rounded-xl p-8 max-w-sm w-full shadow-2xl relative border border-border text-center">
@@ -154,6 +245,96 @@ export default function ServicesPage() {
                 <div className="text-destructive font-medium">Không thể hiển thị mã QR</div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* CRUD MODAL */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-background rounded-xl p-6 w-full max-w-xl shadow-2xl relative border border-border max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold mb-4">{editingId ? 'Cập Nhật Gói Dịch Vụ' : 'Thêm Gói Dịch Vụ Mới'}</h3>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Tên gói</label>
+                <input 
+                  type="text" 
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="VD: VPS Basic"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Danh mục</label>
+                <select 
+                  required
+                  value={formData.categoryId}
+                  onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="" disabled>-- Chọn danh mục --</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Giá mỗi tháng (VNĐ)</label>
+                <input 
+                  type="number" 
+                  required
+                  min="0"
+                  value={formData.monthlyPrice}
+                  onChange={(e) => setFormData({...formData, monthlyPrice: parseInt(e.target.value) || 0})}
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Thông số kỹ thuật (Xuống dòng cho mỗi mục)</label>
+                <textarea 
+                  rows={4}
+                  value={formData.specs}
+                  onChange={(e) => setFormData({...formData, specs: e.target.value})}
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="1 vCore&#10;1 GB RAM&#10;20 GB SSD"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox"
+                  id="isActive"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                  className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
+                />
+                <label htmlFor="isActive" className="text-sm font-medium">Đang hoạt động</label>
+              </div>
+
+              <div className="pt-4 flex gap-3 justify-end border-t mt-4">
+                <button 
+                  type="button"
+                  onClick={() => { setShowModal(false); setEditingId(null); }}
+                  className="px-4 py-2 text-sm font-medium hover:bg-muted rounded-md transition-colors"
+                >
+                  Hủy
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 flex items-center transition-colors disabled:opacity-70"
+                >
+                  {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {editingId ? 'Cập Nhật' : 'Lưu Lại'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
