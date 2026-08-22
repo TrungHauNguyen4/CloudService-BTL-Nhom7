@@ -14,4 +14,10 @@ public class AffiliateApplication : BaseEntity
     // Có thể tái sử dụng OrderStatus (New, Processing, Completed/Approved, Rejected)
     // hoặc tạo Enum riêng cho Affiliate
     public OrderStatus Status { get; set; } = OrderStatus.New;
+    
+    public string? AffiliateCode { get; set; }
+    
+    // Link to the user who applied
+    public Guid? AppUserId { get; set; }
+    public AppUser? AppUser { get; set; }
 }

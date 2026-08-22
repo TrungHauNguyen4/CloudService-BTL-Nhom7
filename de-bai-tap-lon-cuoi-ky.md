@@ -38,7 +38,7 @@ Nhóm sinh viên đóng vai trò đội phát triển, xây dựng hệthống g
 
 -  **ORM** : Entity Framework Core hoặc Dapper (hoặc hybrid – khuyến khích, buổi 5), CSDL SQL Server; 
 
--  **REST API** đúng chuẩn: danh từsốnhiều, status code hợp lý, pagination/filtering/sorting, ProblemDetails cho lỗi, Swagger/OpenAPI (buổi 6); 
+-  **REST API** đúng chuẩn: danh từ số nhiều, status code hợp lý, pagination/filtering/sorting, ProblemDetails cho lỗi, Swagger/OpenAPI (buổi 6); 
 
 -  **Bảo mật** (buổi 7): 
 

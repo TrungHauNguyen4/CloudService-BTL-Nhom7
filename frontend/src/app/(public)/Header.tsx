@@ -2,11 +2,14 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const { user, loading, logout } = useAuth();
 
-  // Đưa menu vào mảng để dễ dàng thêm/sửa/xóa các mục sau này
   const navLinks = [
     { name: 'Trang chủ', path: '/' },
     { name: 'Tin tức', path: '/tin-tuc' },
@@ -32,26 +35,51 @@ export default function Header() {
         </div>
 
         {/* Menu điều hướng Desktop */}
-        <nav className="hidden lg:flex space-x-8">
-          {navLinks.map((link, index) => (
-            <Link 
-              key={index} 
-              href={link.path} 
-              className="text-slate-600 hover:text-blue-600 font-semibold text-sm transition-colors"
-            >
-              {link.name}
-            </Link>
-          ))}
+        <nav className="hidden lg:flex space-x-6">
+          {navLinks.map((link, index) => {
+            const isActive = link.path === '/' ? pathname === '/' : pathname.startsWith(link.path);
+            return (
+              <Link 
+                key={index} 
+                href={link.path} 
+                className={`font-semibold text-sm transition-all duration-300 whitespace-nowrap flex items-center justify-center ${
+                  isActive 
+                    ? 'text-blue-600 bg-blue-50 px-4 py-2 rounded-full' 
+                    : 'text-slate-600 hover:text-blue-600 px-2 py-2'
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
         </nav>
 
-        {/* Nút Đăng nhập / Đăng ký */}
-        <div className="hidden md:flex space-x-5 items-center">
-          <Link href="/dang-nhap" className="text-slate-600 font-bold text-sm hover:text-blue-600 transition-colors">
-            Đăng nhập
-          </Link>
-          <Link href="/dang-ky" className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 transition-all transform hover:-translate-y-0.5">
-            Đăng ký
-          </Link>
+        {/* Nút Đăng nhập / Đăng ký hoặc Auth Bar */}
+        <div className="hidden md:flex space-x-4 items-center">
+          {loading ? (
+            <div className="w-24 h-8 bg-slate-100 animate-pulse rounded-full"></div>
+          ) : user ? (
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-bold text-slate-700 whitespace-nowrap">
+                Chào, {user.name}
+              </span>
+              <Link href={user.role === 'Admin' ? '/admin/dashboard' : '/dashboard'} className="text-blue-600 font-bold text-sm hover:underline whitespace-nowrap">
+                {user.role === 'Admin' ? 'Admin Panel' : 'Dashboard'}
+              </Link>
+              <button onClick={logout} className="text-rose-600 font-bold text-sm hover:underline whitespace-nowrap">
+                Đăng xuất
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link href="/dang-nhap" className="text-slate-600 font-bold text-sm hover:text-blue-600 transition-colors">
+                Đăng nhập
+              </Link>
+              <Link href="/dang-ky" className="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 transition-all transform hover:-translate-y-0.5">
+                Đăng ký
+              </Link>
+            </>
+          )}
         </div>
         
         {/* Nút Hamburger menu cho Mobile */}
@@ -73,20 +101,42 @@ export default function Header() {
       {/* Menu Mobile Dropdown */}
       {isMenuOpen && (
         <div className="absolute top-full left-0 right-0 bg-white shadow-xl border-b border-slate-100 py-4 px-6 lg:hidden">
-          <nav className="flex flex-col space-y-3">
-            {navLinks.map((link, index) => (
-              <Link
-                key={index}
-                href={link.path}
-                className="text-slate-700 hover:text-blue-600 font-semibold py-2 border-b border-slate-50 transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {link.name}
-              </Link>
-            ))}
+          <nav className="flex flex-col space-y-2">
+            {navLinks.map((link, index) => {
+              const isActive = link.path === '/' ? pathname === '/' : pathname.startsWith(link.path);
+              return (
+                <Link
+                  key={index}
+                  href={link.path}
+                  className={`font-semibold py-2.5 px-4 rounded-xl transition-colors ${
+                    isActive
+                      ? 'text-blue-600 bg-blue-50'
+                      : 'text-slate-700 hover:text-blue-600 hover:bg-slate-50'
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
             <div className="flex flex-col gap-3 pt-4">
-              <Link href="/dang-nhap" onClick={() => setIsMenuOpen(false)} className="text-center text-slate-600 font-bold py-2">Đăng nhập</Link>
-              <Link href="/dang-ky" onClick={() => setIsMenuOpen(false)} className="text-center bg-blue-600 text-white py-3 rounded-full font-bold">Đăng ký</Link>
+              {loading ? (
+                <div className="h-10 bg-slate-100 animate-pulse rounded-full"></div>
+              ) : user ? (
+                <>
+                  <Link href={user.role === 'Admin' ? '/admin/dashboard' : '/dashboard'} onClick={() => setIsMenuOpen(false)} className="text-center text-blue-600 font-bold py-2">
+                    {user.role === 'Admin' ? 'Tới Admin Panel' : 'Tới Dashboard'}
+                  </Link>
+                  <button onClick={() => { logout(); setIsMenuOpen(false); }} className="text-center text-rose-600 font-bold py-2">
+                    Đăng xuất
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/dang-nhap" onClick={() => setIsMenuOpen(false)} className="text-center text-slate-600 font-bold py-2">Đăng nhập</Link>
+                  <Link href="/dang-ky" onClick={() => setIsMenuOpen(false)} className="text-center bg-blue-600 text-white py-3 rounded-full font-bold">Đăng ký</Link>
+                </>
+              )}
             </div>
           </nav>
         </div>

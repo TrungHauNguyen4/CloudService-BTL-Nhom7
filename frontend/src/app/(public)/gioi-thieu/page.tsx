@@ -1,13 +1,28 @@
 import Link from 'next/link';
 
-export default function AboutPage() {
+export default async function AboutPage() {
   // Dữ liệu các con số ấn tượng
-  const stats = [
+  let stats = [
     { value: '50+', label: 'Trung tâm dữ liệu (Data Centers)' },
     { value: '99.99%', label: 'Cam kết Uptime SLA' },
     { value: '10,000+', label: 'Khách hàng doanh nghiệp' },
     { value: '100 Gbps', label: 'Băng thông mạng nội bộ' },
   ];
+
+  try {
+    const statRes = await fetch(`${process.env.API_URL || 'http://localhost:5023/api'}/public/stats`, { next: { revalidate: 60 } });
+    if (statRes.ok) {
+      const data = await statRes.json();
+      stats = [
+        { value: `${data.dataCenters}+`, label: 'Trung tâm dữ liệu (Data Centers)' },
+        { value: data.uptimeSla, label: 'Cam kết Uptime SLA' },
+        { value: `${data.totalCustomers}+`, label: 'Khách hàng doanh nghiệp' },
+        { value: `${data.totalServices}+`, label: 'Dịch vụ đang vận hành' },
+      ];
+    }
+  } catch (err) {
+    console.error("Lỗi tải stats About:", err);
+  }
 
   // Dữ liệu giá trị cốt lõi
   const coreValues = [

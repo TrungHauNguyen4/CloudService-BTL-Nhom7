@@ -7,4 +7,5 @@ public class CreateServicePlanDto
     public string Name { get; set; } = string.Empty;
     public string? Specs { get; set; }
     public bool IsActive { get; set; } = true;
+    public decimal MonthlyPrice { get; set; }
 }

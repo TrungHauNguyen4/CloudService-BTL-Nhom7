@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using CloudService.Domain.Interfaces;
 using CloudService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,9 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
 
     public async Task<IEnumerable<T>> GetAllAsync()
         => await _dbSet.ToListAsync();
+
+    public IQueryable<T> Find(Expression<Func<T, bool>> predicate)
+        => _dbSet.Where(predicate);
 
     public async Task AddAsync(T entity)
         => await _dbSet.AddAsync(entity);

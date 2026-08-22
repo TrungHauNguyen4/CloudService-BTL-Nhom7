@@ -17,7 +17,7 @@ public class OrderServiceTests
 
     public OrderServiceTests()
     {
-        _mockUoW = new Mock<IUnitOfWork>();
+        _mockUoW = new Mock<IUnitOfWork> { DefaultValue = DefaultValue.Mock };
         _mockMapper = new Mock<IMapper>();
         _service = new OrderService(_mockUoW.Object, _mockMapper.Object);
     }

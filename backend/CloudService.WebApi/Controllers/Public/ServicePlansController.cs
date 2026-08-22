@@ -1,4 +1,4 @@
-﻿using CloudService.Application.Interfaces;
+using CloudService.Application.Interfaces;
 using CloudService.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,8 +37,9 @@ public class ServicePlansController : ControllerBase
         var plan = await _service.GetByIdAsync(id);
         if (plan == null) return NotFound();
 
+        var price = plan.MonthlyPrice > 0 ? plan.MonthlyPrice : 150000;
         // Giả lập thông tin thanh toán Momo/VNPay
-        var paymentText = $"MOMO|0987654321|{100000}|Thanh toan goi {plan.Name}";
+        var paymentText = $"MOMO|0987654321|{price}|Thanh toan goi {plan.Name}";
         
         var qrBase64 = _qrCodeService.GenerateQrCodeBase64(paymentText);
         
@@ -46,7 +47,7 @@ public class ServicePlansController : ControllerBase
         return Ok(new { 
             qrImage = $"data:image/png;base64,{qrBase64}",
             planName = plan.Name,
-            price = 100000
+            price = price
         });
     }
 }

@@ -1,4 +1,4 @@
-﻿using CloudService.Domain.Entities;
+using CloudService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudService.Infrastructure.Data;
@@ -12,13 +12,74 @@ public class AppDbContext : DbContext
     public DbSet<ServicePlan> ServicePlans { get; set; }
     public DbSet<OrderRequest> OrderRequests { get; set; }
     public DbSet<NewsArticle> NewsArticles { get; set; }
-    public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; } = null!;
     public DbSet<AffiliateApplication> AffiliateApplications { get; set; }
-    public DbSet<Promotion> Promotions { get; set; }
+    public DbSet<Promotion> Promotions { get; set; } = null!;
+    
+    public DbSet<SystemSetting> SystemSettings { get; set; } = null!;
+    
+    // Khách hàng
+    public DbSet<CustomerService> CustomerServices { get; set; } = null!;
+    public DbSet<Invoice> Invoices { get; set; } = null!;
+    public DbSet<ApiKey> ApiKeys { get; set; } = null!;
+    public DbSet<StorageVolume> StorageVolumes { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<AppUser>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.Property(e => e.Username).IsRequired().HasMaxLength(50);
+            entity.HasIndex(e => e.Username).IsUnique();
+        });
+
+        modelBuilder.Entity<CustomerService>(entity =>
+        {
+            entity.HasOne(e => e.Customer)
+                .WithMany(u => u.Services)
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Plan)
+                .WithMany()
+                .HasForeignKey(e => e.PlanId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Invoice>(entity =>
+        {
+            entity.HasOne(e => e.Customer)
+                .WithMany(u => u.Invoices)
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Service)
+                .WithMany()
+                .HasForeignKey(e => e.ServiceId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.Property(e => e.Amount).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<ApiKey>(entity =>
+        {
+            entity.HasOne(e => e.Customer)
+                .WithMany(u => u.ApiKeys)
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<StorageVolume>(entity =>
+        {
+            entity.HasOne(e => e.Customer)
+                .WithMany(u => u.StorageVolumes)
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         modelBuilder.Entity<Promotion>(entity =>
         {
@@ -42,6 +103,9 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.PlanId)
                   .OnDelete(DeleteBehavior.Restrict);
+                  
+            entity.Property(e => e.FinalPrice).HasPrecision(18, 2);
+            entity.Property(e => e.DiscountAmount).HasPrecision(18, 2);
         });
 
         // ===== AppUser =====
@@ -67,6 +131,16 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Phone).HasMaxLength(20);
+            entity.Property(e => e.AffiliateCode).HasMaxLength(20);
+            entity.HasIndex(e => e.AffiliateCode).IsUnique();
+        });
+
+        // ===== SystemSetting =====
+        modelBuilder.Entity<SystemSetting>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Key).IsRequired().HasMaxLength(100);
+            entity.HasIndex(e => e.Key).IsUnique();
         });
 
         // ===== SEED DATA =====
@@ -75,6 +149,11 @@ public class AppDbContext : DbContext
 
     private void SeedData(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<SystemSetting>().HasData(
+            new SystemSetting { Id = Guid.Parse("11111111-2222-3333-4444-555555555555"), Key = "AffiliateDiscountRate", Value = "10", Description = "Phần trăm giảm giá cho khách hàng khi nhập mã Affiliate", CreatedAt = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new SystemSetting { Id = Guid.Parse("22222222-3333-4444-5555-666666666666"), Key = "AffiliateCommissionRate", Value = "10", Description = "Phần trăm hoa hồng cho đối tác Affiliate", CreatedAt = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc) }
+        );
+
         // --- Danh mục dịch vụ ---
         var catVps = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
         var catHosting = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");

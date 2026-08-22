@@ -21,15 +21,24 @@ public class ServicePlanService : IServicePlanService
     public async Task<IEnumerable<ServicePlanDto>> GetAllAsync()
     {
         // Gọi tầng Domain để lấy Entity
-        var plans = await _unitOfWork.ServicePlans.GetAllAsync();
+        var plans = await _unitOfWork.ServicePlans.GetAllWithDetailsAsync();
+        
+        var customerServices = await _unitOfWork.CustomerServices.GetAllAsync();
         
         // Chuyển Entity -> DTO trước khi trả về
-        return _mapper.Map<IEnumerable<ServicePlanDto>>(plans);
+        var dtos = _mapper.Map<IEnumerable<ServicePlanDto>>(plans).ToList();
+        
+        foreach (var dto in dtos)
+        {
+            dto.RegistrationCount = customerServices.Count(s => s.PlanId == dto.Id);
+        }
+        
+        return dtos;
     }
 
     public async Task<ServicePlanDto?> GetByIdAsync(Guid id)
     {
-        var plan = await _unitOfWork.ServicePlans.GetByIdAsync(id);
+        var plan = await _unitOfWork.ServicePlans.GetByIdWithDetailsAsync(id);
         return plan == null ? null : _mapper.Map<ServicePlanDto>(plan);
     }
 
@@ -41,6 +50,13 @@ public class ServicePlanService : IServicePlanService
         // Xử lý Business Logic: Tự động sinh Slug từ Name (Ví dụ "VPS Pro" -> "vps-pro")
         planEntity.Slug = createDto.Name.ToLower().Replace(" ", "-");
         
+        planEntity.Prices.Add(new CloudService.Domain.Entities.PlanPrice
+        {
+            BillingCycle = CloudService.Domain.Enums.BillingCycle.Monthly,
+            Price = createDto.MonthlyPrice,
+            OriginalPrice = createDto.MonthlyPrice
+        });
+
         // Gọi Unit of Work để lưu vào DB
         await _unitOfWork.ServicePlans.AddAsync(planEntity);
         await _unitOfWork.SaveChangesAsync(); // Dòng này sẽ commit transaction
@@ -52,7 +68,7 @@ public class ServicePlanService : IServicePlanService
         Guid id,
         CreateServicePlanDto updateDto)
     {
-        var plan = await _unitOfWork.ServicePlans.GetByIdAsync(id);
+        var plan = await _unitOfWork.ServicePlans.GetByIdWithDetailsAsync(id);
 
         if (plan == null)
         {
@@ -64,6 +80,29 @@ public class ServicePlanService : IServicePlanService
         plan.Specs = updateDto.Specs;
         plan.IsActive = updateDto.IsActive;
 
+        var monthlyPrice = plan.Prices.FirstOrDefault(p => p.BillingCycle == CloudService.Domain.Enums.BillingCycle.Monthly);
+        
+        if (monthlyPrice != null)
+        {
+            monthlyPrice.Price = updateDto.MonthlyPrice;
+            monthlyPrice.OriginalPrice = updateDto.MonthlyPrice;
+        }
+        else
+        {
+            var newPrice = new CloudService.Domain.Entities.PlanPrice
+            {
+                PlanId = plan.Id,
+                BillingCycle = CloudService.Domain.Enums.BillingCycle.Monthly,
+                Price = updateDto.MonthlyPrice,
+                OriginalPrice = updateDto.MonthlyPrice
+            };
+            
+            // Explicitly set the ID to empty to force EF Core to treat it as a new entity (Added)
+            newPrice.Id = Guid.Empty; 
+
+            plan.Prices.Add(newPrice);
+        }
+
         // Cập nhật lại Slug khi đổi tên
         plan.Slug = updateDto.Name
             .Trim()
@@ -72,7 +111,7 @@ public class ServicePlanService : IServicePlanService
 
         plan.UpdatedAt = DateTime.UtcNow;
 
-        _unitOfWork.ServicePlans.Update(plan);
+        // _unitOfWork.ServicePlans.Update(plan); //(TRACKING)
 
         await _unitOfWork.SaveChangesAsync();
 
