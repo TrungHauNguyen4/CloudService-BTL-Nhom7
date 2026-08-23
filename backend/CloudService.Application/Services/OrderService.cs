@@ -93,7 +93,7 @@ public class OrderService : IOrderService
             await _unitOfWork.CustomerServices.AddAsync(customerService);
 
             // 2. Tạo Hóa đơn (Invoice)
-            var amount = dto.BillingCycle == BillingCycle.Yearly ? 1500000m : 150000m;
+            var amount = order.FinalPrice;
 
             var invoice = new Invoice
             {
