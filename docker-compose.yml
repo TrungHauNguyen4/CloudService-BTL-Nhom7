@@ -23,7 +23,7 @@ services:
     depends_on:
       - sqldb
     ports:
-      - "5000:80"
+      - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       # Tự động trỏ chuỗi kết nối Database sang container sqldb ở trên
@@ -42,7 +42,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - API_URL=http://backend:80/api
+      - API_URL=http://backend:8080/api
 
 volumes:
   sql_data: # Khai báo ổ cứng ảo để lưu dữ liệu SQL, tránh mất data khi tắt Docker
