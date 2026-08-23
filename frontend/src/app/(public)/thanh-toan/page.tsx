@@ -20,7 +20,7 @@ function CheckoutContent() {
   const cycleParam = searchParams.get('cycle');
   
   // Billing cycle state
-  const [billingCycle, setBillingCycle] = useState<number>(cycleParam === '12' ? 12 : 1); // 1 = Monthly, 12 = Yearly
+  const [billingCycle, setBillingCycle] = useState<number>(cycleParam === '2' ? 2 : 1); // 1 = Monthly, 2 = Yearly
 
   // Discount states
   const [discountCode, setDiscountCode] = useState('');
@@ -231,8 +231,8 @@ function CheckoutContent() {
                     1 Tháng
                   </button>
                   <button 
-                    onClick={() => setBillingCycle(12)}
-                    className={`px-3 py-1 text-sm font-bold rounded-lg border transition-all ${billingCycle === 12 ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                    onClick={() => setBillingCycle(2)}
+                    className={`px-3 py-1 text-sm font-bold rounded-lg border transition-all ${billingCycle === 2 ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
                   >
                     1 Năm
                   </button>

@@ -22,7 +22,14 @@ public class OrderService : IOrderService
     public async Task<OrderDto> CreateOrderAsync(CreateOrderDto dto)
     {
         var order = _mapper.Map<OrderRequest>(dto);
-        var basePrice = dto.BillingCycle == BillingCycle.Yearly ? 1500000m : 150000m;
+        var basePrice = 150000m;
+        if (dto.BillingCycle == BillingCycle.Yearly)
+        {
+            var settings = await _unitOfWork.SystemSettings.GetAllAsync();
+            var yearlyDiscountStr = settings.FirstOrDefault(s => s.Key == "YearlyDiscountRate")?.Value ?? "16";
+            if (!decimal.TryParse(yearlyDiscountStr, out var yearlyDiscount)) yearlyDiscount = 16m;
+            basePrice = (150000m * 12) * (1m - yearlyDiscount / 100m);
+        }
         
         // Fetch actual plan price if PlanId is provided
         if (dto.PlanId.HasValue)
