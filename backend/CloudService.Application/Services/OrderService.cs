@@ -23,23 +23,30 @@ public class OrderService : IOrderService
     {
         var order = _mapper.Map<OrderRequest>(dto);
         var basePrice = 150000m;
+        // Fetch actual plan price if PlanId is provided
+        if (dto.PlanId.HasValue)
+        {
+            var plan = await _unitOfWork.ServicePlans.GetByIdWithDetailsAsync(dto.PlanId.Value);
+            if (plan != null && plan.Prices != null && plan.Prices.Any())
+            {
+                var monthlyPriceObj = plan.Prices.FirstOrDefault(p => p.BillingCycle == BillingCycle.Monthly);
+                if (monthlyPriceObj != null)
+                {
+                    basePrice = monthlyPriceObj.Price;
+                }
+                else
+                {
+                    basePrice = plan.Prices.First().Price;
+                }
+            }
+        }
+        
         if (dto.BillingCycle == BillingCycle.Yearly)
         {
             var settings = await _unitOfWork.SystemSettings.GetAllAsync();
             var yearlyDiscountStr = settings.FirstOrDefault(s => s.Key == "YearlyDiscountRate")?.Value ?? "16";
             if (!decimal.TryParse(yearlyDiscountStr, out var yearlyDiscount)) yearlyDiscount = 16m;
-            basePrice = (150000m * 12) * (1m - yearlyDiscount / 100m);
-        }
-        
-        // Fetch actual plan price if PlanId is provided
-        if (dto.PlanId.HasValue)
-        {
-            var plan = await _unitOfWork.ServicePlans.GetByIdAsync(dto.PlanId.Value);
-            if (plan != null)
-            {
-                // Simple mockup calculation based on plan, real app should fetch from PlanPrice table
-                // Since this is just a quick demo, we'll keep basePrice as is or use plan info if available.
-            }
+            basePrice = (basePrice * 12) * (1m - yearlyDiscount / 100m);
         }
         
         order.FinalPrice = basePrice;
