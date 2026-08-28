@@ -4,6 +4,10 @@ using CloudService.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using CloudService.Domain.Interfaces;
+using CloudService.Domain.Entities;
+using CloudService.Domain.Enums;
+
 namespace CloudService.WebApi.Controllers.Admin;
 
 [ApiController]
@@ -11,9 +15,49 @@ namespace CloudService.WebApi.Controllers.Admin;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public AuthController(IAuthService authService)
-        => _authService = authService;
+    public AuthController(IAuthService authService, IUnitOfWork unitOfWork)
+    {
+        _authService = authService;
+        _unitOfWork = unitOfWork;
+    }
+
+    public class ForgotPasswordDto
+    {
+        public string Email { get; set; } = string.Empty;
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Email))
+            return BadRequest(new { message = "Email không hợp lệ." });
+
+        var users = await _unitOfWork.AppUsers.GetAllAsync();
+        var user = users.FirstOrDefault(u => u.Email == dto.Email);
+        
+        if (user == null)
+            return Ok(new { message = "Nếu email hợp lệ, bạn sẽ nhận được thông báo cấp lại mật khẩu." });
+
+        var ticket = new SupportTicket
+        {
+            Id = Guid.NewGuid(),
+            TicketCode = $"TK-{DateTime.UtcNow:yyMMdd}-{Random.Shared.Next(1000, 9999)}",
+            CustomerId = user.Id,
+            CustomerName = user.FullName ?? user.Username,
+            Email = user.Email,
+            Subject = "Yêu cầu cấp lại mật khẩu",
+            Message = $"Khách hàng {user.FullName} ({user.Email}) vừa yêu cầu cấp lại mật khẩu do quên mật khẩu.",
+            Status = 1, // 1 = Open
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _unitOfWork.SupportTickets.AddAsync(ticket);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Ok(new { message = "Nếu email hợp lệ, bạn sẽ nhận được thông báo cấp lại mật khẩu." });
+    }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)

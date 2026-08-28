@@ -26,7 +26,7 @@ public class CategoryService : ICategoryService
     {
         var categories =
             await _unitOfWork.ServiceCategories
-                .GetActiveCategoriesAsync();
+                .GetAllWithPromotionsAsync(); // Return all categories including inactive ones for Admin
 
         return _mapper.Map<IEnumerable<CategoryDto>>(categories);
     }
@@ -69,6 +69,11 @@ public class CategoryService : ICategoryService
         category.Name = dto.Name;
         category.Description = dto.Description;
         category.Slug = TaoSlug(dto.Name);
+        category.PromotionId = dto.PromotionId;
+        category.IsActive = dto.IsActive;
+        
+        // Manual mapping for JSON string because AutoMapper isn't used for update
+        category.SpecSchema = dto.SpecSchema != null ? System.Text.Json.JsonSerializer.Serialize(dto.SpecSchema, (System.Text.Json.JsonSerializerOptions)null) : null;
 
         _unitOfWork.ServiceCategories.Update(category);
 

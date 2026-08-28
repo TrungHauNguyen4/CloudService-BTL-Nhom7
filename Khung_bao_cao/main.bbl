@@ -1,0 +1,22 @@
+\begin{thebibliography}{1}
+
+\bibitem{gof}
+Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides.
+\newblock {\em Design Patterns: Elements of Reusable Object-Oriented Software}.
+\newblock Addison-Wesley Professional, 1994.
+
+\bibitem{cleanarchitecture}
+Robert~C. Martin.
+\newblock {\em Clean Architecture: A Craftsman's Guide to Software Structure
+  and Design}.
+\newblock Prentice Hall, 2017.
+
+\bibitem{microsoft_docs}
+Microsoft.
+\newblock Asp.net core documentation, 2026.
+
+\bibitem{nextjs_docs}
+Vercel.
+\newblock Next.js documentation, 2026.
+
+\end{thebibliography}

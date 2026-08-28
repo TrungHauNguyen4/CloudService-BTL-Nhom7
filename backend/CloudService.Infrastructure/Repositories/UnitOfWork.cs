@@ -20,6 +20,7 @@ public class UnitOfWork : IUnitOfWork
     public IGenericRepository<CloudService.Domain.Entities.Invoice> Invoices { get; }
     public IGenericRepository<CloudService.Domain.Entities.ApiKey> ApiKeys { get; }
     public IGenericRepository<CloudService.Domain.Entities.SystemSetting> SystemSettings { get; }
+    public IGenericRepository<CloudService.Domain.Entities.SupportTicket> SupportTickets { get; }
 
     public UnitOfWork(AppDbContext context)
     {
@@ -38,6 +39,7 @@ public class UnitOfWork : IUnitOfWork
         Invoices = new GenericRepository<CloudService.Domain.Entities.Invoice>(context);
         ApiKeys = new GenericRepository<CloudService.Domain.Entities.ApiKey>(context);
         SystemSettings = new GenericRepository<CloudService.Domain.Entities.SystemSetting>(context);
+        SupportTickets = new GenericRepository<CloudService.Domain.Entities.SupportTicket>(context);
     }
 
     public async Task<int> SaveChangesAsync()

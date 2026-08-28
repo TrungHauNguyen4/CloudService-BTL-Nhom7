@@ -61,6 +61,7 @@ export default function PricingPage() {
 
   // Tính toán dữ liệu hiển thị dựa trên Tab đang chọn
   const filteredPlans = allPlans.filter((p: any) => p.category?.slug === activeCategory);
+  const currentCategoryData = categories.find(c => c.slug === activeCategory);
   
   let maxCount = -1;
   let popularPlanId: string | null = null;
@@ -155,6 +156,17 @@ export default function PricingPage() {
             ))}
           </div>
         )}
+
+        {currentCategoryData?.promotionCode && (
+          <div className="mt-4 mb-8 inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl text-sm font-semibold shadow-sm animate-in fade-in zoom-in duration-300">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            <span>Khuyến mãi đặc biệt cho {currentCategoryData.name}: Giảm ngay {currentCategoryData.promotionDiscountPercentage}%</span>
+            <span className="bg-white px-2 py-0.5 rounded-full border border-emerald-100 text-emerald-800 ml-1">Mã: {currentCategoryData.promotionCode}</span>
+          </div>
+        )}
       </div>
 
       {/* PRICING GRID */}
@@ -219,9 +231,8 @@ export default function PricingPage() {
               ))}
             </ul>
 
-            {/* Nút Call to Action */}
             <Link 
-              href={`/thanh-toan?plan=${plan.id}&cycle=${isYearly ? '12' : '1'}${promoCode ? `&promo=${promoCode}` : ''}`} 
+              href={`/thanh-toan?plan=${plan.id}&cycle=${isYearly ? '12' : '1'}${currentCategoryData?.promotionCode ? `&promo=${currentCategoryData.promotionCode}` : ''}`} 
               className={`mt-auto w-full block text-center py-4 rounded-2xl font-bold transition-all duration-300 ${
                 plan.isPopular 
                   ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/30' 
@@ -230,10 +241,38 @@ export default function PricingPage() {
             >
               Triển khai ngay
             </Link>
+            
+            <div className="mt-6 border-t border-slate-100 pt-6">
+              <PlanQrCode planId={plan.id} />
+            </div>
           </div>
         ))}
       </div>
     
     </main>
+  );
+}
+
+function PlanQrCode({ planId }: { planId: string }) {
+  const [qrBase64, setQrBase64] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023/api'}/service-plans/${planId}/qr`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.qrImage) {
+          setQrBase64(data.qrImage);
+        }
+      })
+      .catch(err => console.error(err));
+  }, [planId]);
+
+  if (!qrBase64) return null;
+
+  return (
+    <div className="flex flex-col items-center justify-center">
+      <p className="text-xs text-slate-500 font-medium mb-2 uppercase tracking-wider">Quét để đăng ký bằng ĐTDĐ</p>
+      <img src={qrBase64} alt="QR Code" className="w-24 h-24 border border-slate-200 p-1 rounded-lg" />
+    </div>
   );
 }

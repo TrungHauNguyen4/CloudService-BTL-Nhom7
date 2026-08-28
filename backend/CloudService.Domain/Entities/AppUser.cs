@@ -12,6 +12,7 @@ public class AppUser : BaseEntity
 
     // Thêm các trường cho Customer Dashboard
     public string FullName { get; set; } = string.Empty;
+    public string? Phone { get; set; }
     public string? CompanyName { get; set; }
     public decimal CreditBalance { get; set; } = 0;
     public bool Is2faEnabled { get; set; } = false;

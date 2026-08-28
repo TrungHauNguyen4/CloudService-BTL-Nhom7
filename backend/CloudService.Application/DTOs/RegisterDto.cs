@@ -11,6 +11,8 @@ public class RegisterDto
     [EmailAddress(ErrorMessage = "Email không hợp lệ")]
     public string Email { get; set; } = string.Empty;
 
+    public string? Phone { get; set; }
+
     [Required(ErrorMessage = "Mật khẩu không được để trống")]
     [MinLength(6, ErrorMessage = "Mật khẩu phải từ 6 ký tự")]
     public string Password { get; set; } = string.Empty;

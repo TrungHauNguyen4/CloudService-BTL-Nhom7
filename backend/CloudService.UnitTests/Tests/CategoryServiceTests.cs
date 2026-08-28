@@ -26,12 +26,12 @@ public class CategoryServiceTests
     {
         var categories = new List<ServiceCategory> { new() { Name = "VPS" } };
         
-        // Đã sửa tên hàm cho khớp với TV2 code
-        _mockUoW.Setup(u => u.ServiceCategories.GetActiveCategoriesAsync()).ReturnsAsync(categories);
+        // Đã sửa tên hàm cho khớp với thay đổi mới nhất (kèm Promotion)
+        _mockUoW.Setup(u => u.ServiceCategories.GetAllWithPromotionsAsync()).ReturnsAsync(categories);
         _mockMapper.Setup(m => m.Map<IEnumerable<CategoryDto>>(categories)).Returns(new List<CategoryDto>());
 
         await _service.GetAllAsync();
-        _mockUoW.Verify(u => u.ServiceCategories.GetActiveCategoriesAsync(), Times.Once);
+        _mockUoW.Verify(u => u.ServiceCategories.GetAllWithPromotionsAsync(), Times.Once);
     }
 
     [Fact] // Test 13: Tạo mới danh mục sinh ra Slug

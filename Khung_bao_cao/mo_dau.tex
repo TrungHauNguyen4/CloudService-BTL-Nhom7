@@ -1,0 +1,35 @@
+\chapter*{Mở Đầu}
+\addcontentsline{toc}{chapter}{MỞ ĐẦU}
+
+\section*{1. Bối cảnh đề tài}
+Sự phát triển mạnh mẽ của công nghệ điện toán đám mây (Cloud Computing) đã thúc đẩy quá trình chuyển đổi số của các doanh nghiệp. Các dịch vụ như VPS (Máy chủ ảo), Hosting, Domain, Email doanh nghiệp hay bảo mật Firewall không còn xa lạ mà trở thành nền tảng thiết yếu cho bất kỳ doanh nghiệp nào muốn hiện diện và vận hành trên không gian mạng. Để đáp ứng nhu cầu đó, các nhà cung cấp dịch vụ Cloud cần có một hệ thống website chuyên nghiệp, ổn định để quảng bá dịch vụ, hỗ trợ khách hàng đăng ký và quản trị hệ thống một cách hiệu quả.
+
+Nhận thấy tầm quan trọng của hệ thống website này, nhóm chúng em đã quyết định chọn đề tài: \textbf{"Xây dựng Website bán dịch vụ Cloud"}. Đồ án tập trung vào việc áp dụng các kiến thức cốt lõi của học phần Phát triển phần mềm hướng đối tượng để thiết kế và xây dựng một hệ thống hoàn chỉnh từ Backend đến Frontend, đáp ứng các tiêu chuẩn công nghiệp hiện đại.
+
+\section*{2. Mục tiêu nghiên cứu}
+Đồ án đặt ra các mục tiêu chính sau đây:
+\begin{itemize}
+    \item Ứng dụng mô hình \textbf{Clean Architecture} cùng các nguyên lý \textbf{SOLID} và \textbf{Design Patterns} (như Repository, Unit of Work) vào xây dựng Backend Web API bằng nền tảng ASP.NET Core 9.
+    \item Phát triển giao diện người dùng hiện đại, tốc độ cao (Frontend) bằng công nghệ \textbf{Next.js} có khả năng hiển thị tương thích trên nhiều thiết bị (responsive).
+    \item Triển khai các tính năng cốt lõi cho một website bán dịch vụ: Hiển thị bảng giá dịch vụ (VPS, Hosting, v.v.), tiếp nhận đơn đặt hàng, quản trị người dùng, hệ thống bảo mật bằng JWT và quản lý mã khuyến mãi.
+    \item Vận dụng các quy trình làm việc nhóm hiệu quả thông qua Git/GitHub, thực hành viết \textbf{Unit Test}, xây dựng pipeline \textbf{CI/CD} và đóng gói ứng dụng bằng \textbf{Docker}.
+\end{itemize}
+
+\section*{3. Đối tượng và phạm vi nghiên cứu}
+\textbf{Đối tượng nghiên cứu:}
+\begin{itemize}
+    \item Kiến trúc phần mềm và các mẫu thiết kế hướng đối tượng.
+    \item Nền tảng .NET Core và công nghệ Next.js (React).
+    \item Các quy trình phát triển và kiểm thử phần mềm tự động.
+\end{itemize}
+\textbf{Phạm vi nghiên cứu:} Đồ án tập trung xây dựng trang giới thiệu công khai (Landing Page) cho khách hàng và khu vực quản trị (Admin Dashboard) dành riêng cho quản trị viên với các nghiệp vụ quản lý gói dịch vụ, đơn hàng và tin tức nội bộ.
+
+\section*{4. Cấu trúc của báo cáo}
+Báo cáo được chia thành 5 chương chính:
+\begin{itemize}
+    \item \textbf{Chương I: Cơ sở lý thuyết và công nghệ áp dụng} -- Trình bày tổng quan về điện toán đám mây, các công nghệ Backend (ASP.NET Core, EF Core), Frontend (Next.js, Tailwind CSS) và cơ chế xác thực JWT.
+    \item \textbf{Chương II: Phân tích yêu cầu hệ thống} -- Xác định tác nhân, yêu cầu chức năng (Landing Page và Admin Dashboard), yêu cầu phi chức năng, sơ đồ Use Case và Activity Diagram.
+    \item \textbf{Chương III: Thiết kế hệ thống} -- Mô tả kiến trúc Clean Architecture 4 tầng, thiết kế cơ sở dữ liệu (ERD), các Design Patterns (Repository, Unit of Work) và Sequence Diagram.
+    \item \textbf{Chương IV: Xây dựng và kiểm thử hệ thống} -- Trình bày giao diện người dùng thực tế, kết quả Unit Test (16 test cases) và hệ thống CI/CD, Docker.
+    \item \textbf{Chương V: Kết luận và hướng phát triển} -- Đánh giá kết quả đạt được, phân công công việc của từng thành viên và định hướng phát triển tương lai.
+\end{itemize}

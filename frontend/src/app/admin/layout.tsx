@@ -1,9 +1,11 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect } from "react";
+import apiClient from "@/lib/axios";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import LogoutButton from "./LogoutButton";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   LayoutDashboard, 
   Server, 
@@ -21,6 +23,36 @@ import {
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const router = useRouter();
+  
+  // Protect editor routes on the client side just in case
+  if (user?.role === 'Editor') {
+    const pathname = usePathname();
+    const allowedEditorPaths = ['/admin/orders', '/admin/affiliates', '/admin/news', '/admin/tickets'];
+    if (pathname && pathname !== '/admin' && !allowedEditorPaths.some(p => pathname.startsWith(p))) {
+      router.push('/admin/orders');
+    }
+  }
+
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const res = await apiClient.get('/admin/support-tickets');
+        const tickets = res.data.data || [];
+        const count = tickets.filter((t: any) => t.status === 0).length;
+        setPendingCount(count);
+      } catch (e) { }
+    };
+    if (user?.role === 'Admin' || user?.role === 'Editor') {
+      fetchPendingCount();
+      const interval = setInterval(fetchPendingCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar */}
@@ -31,15 +63,31 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
         
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          <NavItem href="/admin/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
-          <NavItem href="/admin/services" icon={<Server size={20} />} label="Gói Cloud" />
+          {user?.role === 'Admin' && (
+            <>
+              <NavItem href="/admin/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
+              <NavItem href="/admin/services" icon={<Server size={20} />} label="Gói Cloud" />
+              <NavItem href="/admin/categories" icon={<LayoutDashboard size={20} />} label="Danh Mục Dịch Vụ" />
+            </>
+          )}
           <NavItem href="/admin/orders" icon={<ShoppingCart size={20} />} label="Đơn Hàng" />
-          <NavItem href="/admin/accounts" icon={<Contact size={20} />} label="Tài Khoản" />
-          <NavItem href="/admin/customers" icon={<Users size={20} />} label="Khách Hàng" />
+          <NavItem href="/admin/tickets" icon={<Users size={20} />} label="Ticket Hỗ Trợ" />
+          {user?.role === 'Admin' && (
+            <>
+              <NavItem href="/admin/accounts" icon={<Contact size={20} />} label="Tài Khoản" />
+              <NavItem href="/admin/customers" icon={<Users size={20} />} label="Khách Hàng" />
+              <NavItem href="/admin/customer-services" icon={<Server size={20} />} label="Dịch Vụ Khách" />
+            </>
+          )}
           <NavItem href="/admin/news" icon={<Newspaper size={20} />} label="Tin Tức" />
-          <NavItem href="/admin/promotions" icon={<Tag size={20} />} label="Khuyến Mãi" />
-          <NavItem href="/admin/analytics" icon={<PieChart size={20} />} label="Thống Kê" />
-          <NavItem href="/admin/audit-logs" icon={<History size={20} />} label="Nhật Ký Hệ Thống" />
+          <NavItem href="/admin/affiliates" icon={<Users size={20} />} label="Đối Tác Affiliate" />
+          {user?.role === 'Admin' && (
+            <>
+              <NavItem href="/admin/promotions" icon={<Tag size={20} />} label="Khuyến Mãi" />
+              <NavItem href="/admin/analytics" icon={<PieChart size={20} />} label="Thống Kê" />
+              <NavItem href="/admin/audit-logs" icon={<History size={20} />} label="Nhật Ký Hệ Thống" />
+            </>
+          )}
         </nav>
         
         <div className="p-4 border-t border-border shrink-0 flex flex-col gap-1">
@@ -62,17 +110,21 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
           
           <div className="flex items-center space-x-4">
-            <button className="relative p-2 rounded-full hover:bg-muted transition-colors">
+            <Link href="/admin/tickets" className="relative p-2 rounded-full hover:bg-muted transition-colors inline-block cursor-pointer">
               <Bell className="w-5 h-5 text-muted-foreground" />
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-card"></span>
-            </button>
+              {pendingCount > 0 && (
+                <span className="absolute top-0 right-0 w-4 h-4 bg-destructive text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-card">
+                  {pendingCount}
+                </span>
+              )}
+            </Link>
             <div className="flex items-center space-x-3 border-l border-border pl-4">
               <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-sm shadow-sm ring-1 ring-primary/30">
                 AD
               </div>
               <div className="hidden sm:flex flex-col">
-                <span className="text-sm font-medium leading-none">Administrator</span>
-                <span className="text-xs text-muted-foreground mt-1">Hệ thống</span>
+                <span className="text-sm font-medium leading-none">{user?.fullName || 'Administrator'}</span>
+                <span className="text-xs text-muted-foreground mt-1">{user?.role || 'Hệ thống'}</span>
               </div>
               <LogoutButton />
             </div>

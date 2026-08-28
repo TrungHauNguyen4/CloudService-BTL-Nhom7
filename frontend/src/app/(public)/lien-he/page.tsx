@@ -15,6 +15,21 @@ function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  
+  // Track Ticket
+  const [ticketCode, setTicketCode] = useState('');
+  const [trackCodeInput, setTrackCodeInput] = useState('');
+  const [trackResult, setTrackResult] = useState<any>(null);
+  const [trackError, setTrackError] = useState('');
+  const [isTracking, setIsTracking] = useState(false);
+
+  const handleOpenTicket = () => {
+    setSubject('Hỗ trợ kỹ thuật');
+    const formEl = document.getElementById('contact-form');
+    if (formEl) {
+      formEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,15 +38,15 @@ function ContactForm() {
     setSuccess(false);
 
     try {
-      await apiClient.post('/order-requests', {
+      const res = await apiClient.post('/support-tickets', {
         customerName: name,
         email: email,
-        phone: '000000000',
-        serviceName: subject + ' - ' + content,
-        planId: null,
-        billingCycle: 'Monthly',
+        subject: subject,
+        message: content,
+        customerServiceId: null
       });
       setSuccess(true);
+      setTicketCode(res.data.ticketCode);
       setName('');
       setEmail('');
       setContent('');
@@ -108,20 +123,30 @@ function ContactForm() {
             <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
             <h3 className="text-xl font-bold mb-2 relative z-10">Cần hỗ trợ khẩn cấp?</h3>
             <p className="text-blue-100 text-sm mb-6 relative z-10">Khách hàng gói Enterprise vui lòng sử dụng kênh ưu tiên.</p>
-            <button className="relative z-10 bg-white text-blue-700 px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors shadow-sm">
+            <button 
+              onClick={handleOpenTicket}
+              className="relative z-10 bg-white text-blue-700 px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors shadow-sm"
+            >
               Mở Ticket Hỗ Trợ
             </button>
           </div>
         </div>
 
         {/* CỘT 2: FORM GỬI TIN NHẮN */}
-        <div className="order-1 lg:order-2 bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100">
+        <div id="contact-form" className="order-1 lg:order-2 bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100">
           <h2 className="text-2xl font-bold text-slate-900 mb-8">Gửi Tin Nhắn</h2>
           
           {success && (
-            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl flex items-center gap-3">
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-              <span>Tin nhắn của bạn đã được gửi thành công! Chúng tôi sẽ liên hệ lại sớm nhất.</span>
+            <div className="mb-6 p-6 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl">
+              <div className="flex items-center gap-3 mb-2">
+                <svg className="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                <span className="font-bold text-lg">Tin nhắn của bạn đã được gửi!</span>
+              </div>
+              <p className="mb-2">Chúng tôi sẽ phản hồi lại sớm nhất.</p>
+              <div className="bg-white px-4 py-3 rounded-xl border border-emerald-100 flex items-center justify-between">
+                <span>Mã tra cứu của bạn: <strong>{ticketCode}</strong></span>
+                <button onClick={() => { navigator.clipboard.writeText(ticketCode); alert('Đã copy mã!'); }} className="text-sm bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-3 py-1 rounded-lg font-bold">Copy</button>
+              </div>
             </div>
           )}
 
@@ -198,6 +223,76 @@ function ContactForm() {
           </form>
         </div>
 
+      </div>
+      
+      {/* CỘT 3: TRA CỨU MÃ HỖ TRỢ */}
+      <div className="max-w-6xl mx-auto mt-12 bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100">
+        <h2 className="text-2xl font-bold text-slate-900 mb-6">Tra Cứu Mã Hỗ Trợ</h2>
+        <p className="text-slate-500 mb-6">Nhập mã hỗ trợ (Ticket Code) mà bạn nhận được sau khi gửi yêu cầu để xem phản hồi từ quản trị viên.</p>
+        
+        <div className="flex gap-4 mb-6">
+          <input 
+            type="text" 
+            value={trackCodeInput} 
+            onChange={(e) => setTrackCodeInput(e.target.value)} 
+            placeholder="Ví dụ: TK-2608-A1B2C3" 
+            className="flex-1 px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-slate-900 font-bold" 
+          />
+          <button 
+            onClick={async () => {
+              if (!trackCodeInput.trim()) return;
+              setIsTracking(true);
+              setTrackError('');
+              setTrackResult(null);
+              try {
+                const res = await apiClient.get('/support-tickets/track/' + trackCodeInput.trim());
+                setTrackResult(res.data);
+              } catch (err: any) {
+                setTrackError('Không tìm thấy mã yêu cầu này.');
+              } finally {
+                setIsTracking(false);
+              }
+            }}
+            disabled={isTracking}
+            className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-8 rounded-2xl transition-all disabled:opacity-50"
+          >
+            {isTracking ? 'Đang tìm...' : 'Tra cứu'}
+          </button>
+        </div>
+
+        {trackError && <div className="text-rose-600 font-medium">{trackError}</div>}
+        
+        {trackResult && (
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="font-bold text-lg text-slate-900">{trackResult.subject}</h3>
+                <p className="text-sm text-slate-500">Ngày gửi: {new Date(trackResult.createdAt).toLocaleString('vi-VN')}</p>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                trackResult.status === 1 ? 'bg-blue-100 text-blue-700' : 
+                trackResult.status === 2 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'
+              }`}>
+                {trackResult.status === 1 ? 'Đang xử lý' : trackResult.status === 2 ? 'Đã trả lời' : 'Đã đóng'}
+              </span>
+            </div>
+            
+            <div className="mb-4">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Tin nhắn của bạn:</span>
+              <p className="text-slate-700 whitespace-pre-wrap bg-white p-4 rounded-xl border border-slate-100">{trackResult.message}</p>
+            </div>
+
+            {trackResult.adminReply && (
+              <div>
+                <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1 block">Admin phản hồi:</span>
+                <p className="text-slate-800 font-medium whitespace-pre-wrap bg-emerald-50 p-4 rounded-xl border border-emerald-100">{trackResult.adminReply}</p>
+              </div>
+            )}
+            {!trackResult.adminReply && trackResult.status === 1 && (
+              <p className="text-slate-500 italic text-sm">Quản trị viên chưa phản hồi. Vui lòng quay lại sau nhé!</p>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );

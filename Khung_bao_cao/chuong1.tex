@@ -1,0 +1,75 @@
+\chapter{CƠ SỞ LÝ THUYẾT VÀ CÔNG NGHỆ ÁP DỤNG}
+
+\section{Tổng quan về Điện toán đám mây (Cloud Computing)}
+Điện toán đám mây là mô hình cung cấp các tài nguyên máy tính (máy chủ, mạng, lưu trữ, cơ sở dữ liệu, phần mềm) qua Internet (``đám mây'') nhằm cung cấp sự đổi mới nhanh hơn, tài nguyên linh hoạt và lợi thế kinh tế theo quy mô. 
+
+Trong khuôn khổ của hệ thống bán dịch vụ Cloud, các khái niệm dịch vụ chính được hệ thống cung cấp bao gồm:
+\begin{itemize}
+    \item \textbf{VPS (Virtual Private Server):} Máy chủ riêng ảo được phân chia từ một máy chủ vật lý, cung cấp tài nguyên độc lập, có hệ điều hành riêng và cho phép toàn quyền quản trị (Root/Administrator).
+    \item \textbf{Web Hosting:} Dịch vụ lưu trữ dữ liệu website trên máy chủ đã được cấu hình sẵn môi trường (web server, database server), giúp khách hàng dễ dàng đưa website lên Internet mà không cần kiến thức quản trị máy chủ sâu sắc.
+    \item \textbf{Tên miền (Domain Name):} Địa chỉ định danh của một website trên mạng Internet, đóng vai trò như ``địa chỉ nhà'' thay thế cho dãy địa chỉ IP phức tạp.
+\end{itemize}
+
+\section{Nền tảng và Công nghệ phía Backend}
+
+\subsection{ASP.NET Core và C\#}
+ASP.NET Core \cite{microsoft_docs} là một framework mã nguồn mở, đa nền tảng do Microsoft phát triển dùng để xây dựng các ứng dụng web hiện đại, các dịch vụ IoT và các backend dùng cho ứng dụng di động. ASP.NET Core có hiệu năng rất cao, thiết kế theo mô hình mô-đun (modular) và hỗ trợ tích hợp sẵn Dependency Injection. 
+
+Trong dự án này, ASP.NET Core 9 Web API được sử dụng để phát triển RESTful API phục vụ cho quá trình trao đổi dữ liệu với Frontend. API được chia thành hai nhóm chính: \texttt{Public API} (không yêu cầu đăng nhập) và \texttt{Admin API} (yêu cầu xác thực JWT và phân quyền Role).
+
+\subsection{Entity Framework Core (EF Core)}
+EF Core là một Object-Relational Mapper (ORM) nhẹ, mã nguồn mở, giúp lập trình viên C\# làm việc với cơ sở dữ liệu quan hệ bằng cách sử dụng các đối tượng .NET mạnh mẽ mà không cần phải viết phần lớn các câu truy vấn cơ sở dữ liệu thông thường. Hệ thống sử dụng EF Core kết hợp với SQL Server 2022 để lưu trữ và truy xuất dữ liệu. Quá trình quản lý sự thay đổi cấu trúc bảng được thực hiện thông qua cơ chế \textbf{Migrations} tự động.
+
+\subsection{SQL Server 2022}
+Microsoft SQL Server là hệ quản trị cơ sở dữ liệu quan hệ (RDBMS) được sử dụng rộng rãi trong môi trường doanh nghiệp. Trong dự án, SQL Server 2022 phiên bản Express được triển khai thông qua Docker container, giúp nhất quán môi trường phát triển giữa các thành viên trong nhóm.
+
+\section{Nền tảng và Công nghệ phía Frontend}
+
+\subsection{Next.js và React}
+Next.js \cite{nextjs_docs} là một framework của React giúp xây dựng các ứng dụng web tối ưu hóa SEO thông qua khả năng Server-Side Rendering (SSR) và Static Site Generation (SSG). Next.js sử dụng kiến trúc App Router mới (từ phiên bản 13 trở lên), giúp cấu trúc thư mục logic hơn và hỗ trợ các tính năng React Server Components.
+
+Trong dự án, Next.js được sử dụng để xây dựng toàn bộ giao diện người dùng bao gồm: Landing Page công khai (10 trang), Admin Dashboard (8 trang quản trị), và Customer Dashboard.
+
+\subsection{Tailwind CSS}
+Tailwind CSS là một utility-first CSS framework giúp xây dựng các giao diện người dùng nhanh chóng mà không cần phải thoát ra khỏi tệp HTML/JSX. Nó cung cấp các class mức độ thấp để kết hợp lại tạo thành bất kỳ thiết kế tùy chỉnh nào. Giao diện trang chủ và trang quản trị của dự án được thiết kế hoàn toàn bằng Tailwind CSS, mang lại vẻ ngoài hiện đại và thân thiện với thiết bị di động (Responsive Design).
+
+\subsection{Axios và Quản lý Token}
+Thư viện Axios được sử dụng để thực hiện các HTTP Request từ Frontend đến Backend API. Hệ thống cấu hình một \texttt{apiClient} tập trung với:
+\begin{itemize}
+    \item \texttt{baseURL}: trỏ đến địa chỉ Backend API (\texttt{http://localhost:5023/api}).
+    \item \texttt{Interceptor Request}: tự động gắn JWT Token vào tiêu đề \texttt{Authorization} của mọi request.
+    \item \texttt{Interceptor Response}: xử lý lỗi 401 (Unauthorized) bằng cách xóa token cũ và chuyển hướng về trang đăng nhập.
+\end{itemize}
+
+\section{Xác thực và Bảo mật với JWT (JSON Web Token)}
+JSON Web Token (JWT) là một tiêu chuẩn mở (RFC 7519) định nghĩa một cách nhỏ gọn và tự chứa để truyền tải thông tin an toàn giữa các bên dưới dạng một đối tượng JSON. Thông tin này có thể được xác minh và tin cậy vì nó được ký điện tử.
+
+Trong hệ thống, JWT được ứng dụng làm cơ chế xác thực chính (Stateless Authentication):
+\begin{enumerate}
+    \item Quản trị viên gửi yêu cầu đăng nhập (email và mật khẩu) lên Backend qua endpoint \texttt{POST /api/auth/login}.
+    \item Backend kiểm tra mật khẩu đã mã hóa bằng thuật toán \textbf{BCrypt}, nếu đúng sẽ sinh ra một chuỗi JWT (\texttt{AccessToken}) có chứa thông tin cơ bản (ID người dùng, Role) cùng với chữ ký bí mật, và một \texttt{RefreshToken} để gia hạn phiên làm việc.
+    \item Frontend lưu token vào Cookie và gửi kèm trong tiêu đề \texttt{Authorization: Bearer <token>} của các yêu cầu tiếp theo.
+    \item Backend xác minh chữ ký của JWT thông qua Middleware; nếu hợp lệ, yêu cầu được cấp phép thực hiện theo phân quyền tương ứng (\texttt{Admin} hoặc \texttt{Editor}).
+\end{enumerate}
+
+\section{Các nguyên lý thiết kế SOLID}
+SOLID là tập hợp 5 nguyên lý thiết kế hướng đối tượng giúp tạo ra phần mềm linh hoạt, dễ bảo trì và mở rộng:
+
+\begin{itemize}
+    \item \textbf{S -- Single Responsibility Principle:} Mỗi lớp chỉ chịu trách nhiệm cho một chức năng duy nhất. Ví dụ: \texttt{OrderService} chỉ xử lý logic đơn hàng, \texttt{JwtService} chỉ xử lý việc tạo/xác thực token.
+    \item \textbf{O -- Open/Closed Principle:} Hệ thống mở cho việc mở rộng nhưng đóng cho việc sửa đổi. Ví dụ: thêm một dịch vụ mới (SSL, Firewall) chỉ cần tạo thêm bản ghi trong bảng \texttt{ServiceCategory} mà không cần sửa code.
+    \item \textbf{L -- Liskov Substitution Principle:} Các lớp triển khai (Implementation) có thể thay thế cho lớp cha (Interface) mà không ảnh hưởng logic. Ví dụ: \texttt{OrderService} triển khai giao diện \texttt{IOrderService}, có thể thay bằng \texttt{MockOrderService} khi test.
+    \item \textbf{I -- Interface Segregation Principle:} Hệ thống sử dụng 9 giao diện chuyên biệt (\texttt{IOrderService}, \texttt{ICategoryService}, \texttt{INewsArticleService}...) thay vì một giao diện lớn chứa tất cả.
+    \item \textbf{D -- Dependency Inversion Principle:} Các lớp cấp cao (Controller, Service) phụ thuộc vào giao diện trừu tượng (Interface) thay vì lớp cụ thể. Việc ``nối dây'' (wiring) được thực hiện tại \texttt{Program.cs} thông qua Dependency Injection container có sẵn của ASP.NET Core.
+\end{itemize}
+
+\section{Các công cụ hỗ trợ phát triển}
+\begin{itemize}
+    \item \textbf{Git \& GitHub:} Quản lý phiên bản mã nguồn, làm việc nhóm qua Pull Request.
+    \item \textbf{Docker \& Docker Compose:} Đóng gói ứng dụng và cơ sở dữ liệu vào container.
+    \item \textbf{GitHub Actions:} Pipeline CI tự động build và chạy unit test khi push/PR.
+    \item \textbf{xUnit \& Moq:} Framework kiểm thử đơn vị và thư viện mock cho .NET.
+    \item \textbf{Swagger (OpenAPI):} Tự động tạo tài liệu API tương tác cho Backend.
+    \item \textbf{QRCoder:} Thư viện .NET sinh mã QR Code cho từng gói dịch vụ.
+    \item \textbf{ClosedXML:} Thư viện .NET xuất dữ liệu ra file Excel (.xlsx).
+\end{itemize}

@@ -22,9 +22,9 @@ export default function ServicesPage() {
     name: "",
     categoryId: "",
     monthlyPrice: 0,
-    specs: "",
     isActive: true
   });
+  const [specItems, setSpecItems] = useState<string[]>([""]);
 
   const fetchServices = async () => {
     try {
@@ -82,9 +82,9 @@ export default function ServicesPage() {
       name: "",
       categoryId: categories.length > 0 ? categories[0].id : "",
       monthlyPrice: 0,
-      specs: "",
       isActive: true
     });
+    setSpecItems([""]);
     setEditingId(null);
     setShowModal(true);
   };
@@ -94,18 +94,38 @@ export default function ServicesPage() {
       name: service.name,
       categoryId: service.categoryId || (service.category?.id) || "",
       monthlyPrice: service.monthlyPrice,
-      specs: service.specs || "",
       isActive: service.isActive
     });
+    
+    // Convert specs string back to array
+    const specsString = service.specs || "";
+    const parts = specsString.split(/[\n]|\s\/\s/).map((s: string) => s.trim()).filter(Boolean);
+    setSpecItems(parts.length > 0 ? parts : [""]);
+    
     setEditingId(service.id);
     setShowModal(true);
+  };
+
+  const handleSpecChange = (index: number, value: string) => {
+    const newSpecs = [...specItems];
+    newSpecs[index] = value;
+    setSpecItems(newSpecs);
+  };
+
+  const addSpec = () => setSpecItems([...specItems, ""]);
+  
+  const removeSpec = (index: number) => {
+    const newSpecs = specItems.filter((_, i) => i !== index);
+    setSpecItems(newSpecs.length > 0 ? newSpecs : [""]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const payload = { ...formData };
+      // Join specItems with \n
+      const finalSpecs = specItems.map(s => s.trim()).filter(s => s !== "").join("\n");
+      const payload = { ...formData, specs: finalSpecs };
       
       if (editingId) {
         await apiClient.put(`/admin/service-plans/${editingId}`, payload);
@@ -255,66 +275,135 @@ export default function ServicesPage() {
           <div className="bg-background rounded-xl p-6 w-full max-w-xl shadow-2xl relative border border-border max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold mb-4">{editingId ? 'Cập Nhật Gói Dịch Vụ' : 'Thêm Gói Dịch Vụ Mới'}</h3>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Tên gói</label>
-                <input 
-                  type="text" 
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="VD: VPS Basic"
-                />
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Tên Gói */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Tên gói</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="VD: VPS Basic"
+                  />
+                </div>
+
+                {/* Danh Mục */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Danh mục</label>
+                  <select 
+                    required
+                    value={formData.categoryId}
+                    onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="" disabled>-- Chọn danh mục --</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Giá */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Giá mỗi tháng (VNĐ)</label>
+                  <input 
+                    type="number" 
+                    required
+                    min="0"
+                    value={formData.monthlyPrice}
+                    onChange={(e) => setFormData({...formData, monthlyPrice: parseInt(e.target.value) || 0})}
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                {/* Trạng Thái */}
+                <div className="flex items-center gap-3 pt-6">
+                  <input 
+                    type="checkbox"
+                    id="isActive"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                    className="w-5 h-5 text-primary rounded border-gray-300 focus:ring-primary cursor-pointer"
+                  />
+                  <label htmlFor="isActive" className="text-sm font-medium cursor-pointer">Đang hoạt động</label>
+                </div>
               </div>
 
+              {/* Thông số kỹ thuật - Full Width */}
+              {/* Thông số kỹ thuật - Full Width */}
               <div>
-                <label className="block text-sm font-medium mb-1">Danh mục</label>
-                <select 
-                  required
-                  value={formData.categoryId}
-                  onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="" disabled>-- Chọn danh mục --</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
+                {(() => {
+                  const selectedCategory = categories.find(c => c.id === formData.categoryId);
+                  const currentSchema = selectedCategory?.specSchema || [];
+                  const isFixedSchema = currentSchema.length > 0;
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Giá mỗi tháng (VNĐ)</label>
-                <input 
-                  type="number" 
-                  required
-                  min="0"
-                  value={formData.monthlyPrice}
-                  onChange={(e) => setFormData({...formData, monthlyPrice: parseInt(e.target.value) || 0})}
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Thông số kỹ thuật (Xuống dòng cho mỗi mục)</label>
-                <textarea 
-                  rows={4}
-                  value={formData.specs}
-                  onChange={(e) => setFormData({...formData, specs: e.target.value})}
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="1 vCore&#10;1 GB RAM&#10;20 GB SSD"
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox"
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                  className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
-                />
-                <label htmlFor="isActive" className="text-sm font-medium">Đang hoạt động</label>
+                  return (
+                    <>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="block text-sm font-medium">Thông số kỹ thuật</label>
+                        {!isFixedSchema && (
+                          <button 
+                            type="button" 
+                            onClick={addSpec}
+                            className="text-xs flex items-center gap-1 bg-primary/10 text-primary hover:bg-primary/20 px-2 py-1 rounded transition-colors font-medium"
+                          >
+                            <Plus className="w-3 h-3" /> Thêm mục
+                          </button>
+                        )}
+                      </div>
+                      
+                      {isFixedSchema ? (
+                        <div className="space-y-3 bg-muted/5 p-4 rounded-lg border border-border">
+                          {currentSchema.map((fieldLabel: string, index: number) => (
+                            <div key={index} className="flex items-center gap-4">
+                              <label className="w-1/3 text-sm font-medium text-muted-foreground text-right">{fieldLabel}</label>
+                              <input 
+                                type="text"
+                                value={specItems[index] || ""}
+                                onChange={(e) => handleSpecChange(index, e.target.value)}
+                                className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-background"
+                                placeholder={`Nhập ${fieldLabel}...`}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="space-y-2 border border-border bg-muted/10 p-3 rounded-lg max-h-48 overflow-y-auto">
+                          {specItems.map((spec, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <div className="w-6 h-6 shrink-0 flex items-center justify-center bg-muted text-muted-foreground rounded text-xs font-bold">
+                                {index + 1}
+                              </div>
+                              <input 
+                                type="text"
+                                value={spec}
+                                onChange={(e) => handleSpecChange(index, e.target.value)}
+                                className="flex-1 px-3 py-1.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                placeholder="VD: 1 vCore"
+                              />
+                              <button 
+                                type="button"
+                                onClick={() => removeSpec(index)}
+                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
+                                title="Xóa mục"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                          {specItems.length === 0 && (
+                            <div className="text-center py-4 text-muted-foreground text-sm">
+                              Chưa có thông số nào. Hãy bấm "Thêm mục" để bắt đầu.
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               <div className="pt-4 flex gap-3 justify-end border-t mt-4">

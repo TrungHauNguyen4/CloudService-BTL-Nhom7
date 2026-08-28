@@ -32,6 +32,33 @@ export default function ComputePage() {
   }, []);
 
   const [selectedService, setSelectedService] = useState<CustomerService | null>(null);
+  const [isCanceling, setIsCanceling] = useState(false);
+
+  const fetchServices = async () => {
+    try {
+      const res = await apiClient.get('/customer/services');
+      setServices(res.data);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách máy chủ", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelService = async (id: string) => {
+    if (!confirm('Bạn có chắc chắn muốn hủy gói dịch vụ này không? Thao tác này không thể hoàn tác.')) return;
+    setIsCanceling(true);
+    try {
+      await apiClient.post(`/customer/services/${id}/cancel`);
+      alert('Đã hủy gói dịch vụ thành công.');
+      setSelectedService(null);
+      fetchServices();
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Có lỗi xảy ra khi hủy gói.');
+    } finally {
+      setIsCanceling(false);
+    }
+  };
 
   return (
     <>
@@ -69,9 +96,10 @@ export default function ComputePage() {
                       <td className="px-6 py-4 text-slate-600">{srv.os || 'Ubuntu 24.04'}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                          srv.status === 'Running' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'
+                          srv.status === 'Running' ? 'bg-emerald-100 text-emerald-800' : 
+                          srv.status === 'Cancelled' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-800'
                         }`}>
-                          {srv.status}
+                          {srv.status === 'Cancelled' ? 'Đã hủy' : srv.status}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -139,6 +167,15 @@ export default function ComputePage() {
               >
                 Khởi động lại
               </button>
+              {selectedService.status !== 'Cancelled' && (
+                <button 
+                  onClick={() => handleCancelService(selectedService.id)}
+                  disabled={isCanceling}
+                  className="flex-1 bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold py-3 rounded-xl transition-colors disabled:opacity-50"
+                >
+                  {isCanceling ? 'Đang hủy...' : 'Hủy gói'}
+                </button>
+              )}
               <button 
                 onClick={() => setSelectedService(null)}
                 className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-colors"

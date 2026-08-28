@@ -6,5 +6,10 @@ public class CategoryDto
     public string Slug { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool IsActive { get; set; }
+    
+    public Guid? PromotionId { get; set; }
+    public string? PromotionCode { get; set; }
+    public decimal? PromotionDiscountPercentage { get; set; }
+    public List<string>? SpecSchema { get; set; }
 }
 

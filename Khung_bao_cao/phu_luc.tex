@@ -1,0 +1,145 @@
+\chapter*{Phụ Lục}
+\addcontentsline{toc}{chapter}{PHỤ LỤC}
+
+\section*{Phụ lục A: Cấu trúc thư mục Backend}
+\begin{verbatim}
+backend/
+|-- CloudService.Domain/           # Tang Domain (Core)
+|   |-- Common/
+|   |   \-- BaseEntity.cs          # Lop co so (Id, CreatedAt, UpdatedAt)
+|   |-- Entities/
+|   |   |-- ServiceCategory.cs     # Danh muc dich vu
+|   |   |-- ServicePlan.cs         # Goi dich vu
+|   |   |-- PlanPrice.cs           # Gia theo chu ky
+|   |   |-- Promotion.cs           # Khuyen mai
+|   |   |-- NewsArticle.cs         # Bai viet/Tin tuc
+|   |   |-- OrderRequest.cs        # Yeu cau dat DV
+|   |   |-- AffiliateApplication.cs # Dang ky doi tac
+|   |   |-- AppUser.cs             # Tai khoan quan tri
+|   |   \-- AuditLog.cs            # Nhat ky he thong
+|   \-- Enums/
+|       |-- UserRole.cs            # Admin, Editor
+|       |-- OrderStatus.cs         # Pending, Processing...
+|       \-- BillingCycle.cs        # Monthly, Yearly
+|
+|-- CloudService.Application/      # Tang Application
+|   |-- Interfaces/                # 9 giao dien (Interface)
+|   |-- Services/                  # 8 Service implementations
+|   \-- DTOs/                      # Data Transfer Objects
+|
+|-- CloudService.Infrastructure/    # Tang Infrastructure
+|   |-- Data/
+|   |   |-- AppDbContext.cs        # EF Core DbContext
+|   |   \-- Migrations/           # Database migrations
+|   |-- Repositories/              # 7 Repository + UnitOfWork
+|   \-- Services/
+|       |-- JwtService.cs          # Sinh JWT Token
+|       |-- PasswordHashService.cs # BCrypt hash
+|       |-- QrCodeService.cs       # Sinh ma QR
+|       |-- ExcelExportService.cs  # Xuat Excel
+|       \-- AuthService.cs         # Xac thuc
+|
+|-- CloudService.WebApi/            # Tang Presentation
+|   |-- Controllers/
+|   |   |-- Public/                # 5 API cong khai
+|   |   \-- Admin/                 # 9 API quan tri
+|   |-- Middleware/
+|   |   |-- ExceptionMiddleware.cs
+|   |   \-- AuditMiddleware.cs
+|   \-- Program.cs                 # DI + Pipeline config
+|
+|-- CloudService.UnitTests/         # Unit Test project
+|   \-- Tests/                     # 5 file, 16 test cases
+|
+|-- Dockerfile                      # Multi-stage build
+\-- docker-compose.yml              # API + SQL Server
+\end{verbatim}
+
+\section*{Phụ lục B: Cấu hình docker-compose.yml}
+\begin{verbatim}
+version: '3.8'
+services:
+  sqldb:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cloudservice_db
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=CloudService@2026!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cloudservice_api
+    depends_on:
+      - sqldb
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__Default=Server=sqldb;
+        Database=CloudServiceDb;User=sa;
+        Password=CloudService@2026!;
+        TrustServerCertificate=True
+
+volumes:
+  sql_data:
+\end{verbatim}
+
+\section*{Phụ lục C: Cấu hình GitHub Actions CI}
+\begin{verbatim}
+name: .NET Backend CI
+on:
+  push:
+    branches: [ "develop", "main" ]
+  pull_request:
+    branches: [ "develop", "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+    - name: Restore API
+      run: dotnet restore backend/CloudService.WebApi/
+           CloudService.WebApi.csproj
+    - name: Restore Unit Test
+      run: dotnet restore backend/CloudService.UnitTests/
+           CloudService.UnitTests.csproj
+    - name: Build
+      run: dotnet build backend/CloudService.WebApi/
+           CloudService.WebApi.csproj --no-restore -c Release
+    - name: Run 16 Unit Tests
+      run: dotnet test backend/CloudService.UnitTests/
+           CloudService.UnitTests.csproj --no-restore
+\end{verbatim}
+
+\section*{Phụ lục D: Tài khoản Demo}
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Vai trò} & \textbf{Email} & \textbf{Mật khẩu} \\
+        \hline
+        Admin & admin@cloudservice.vn & Admin@123 \\
+        \hline
+        Customer & ustomer@gmail.com & Customer@123 \\
+        \hline
+    \end{tabular}
+    \caption{Tài khoản demo cho hệ thống}
+\end{table}
+\textbf{Lưu ý:} Mật khẩu đã được mã hóa BCrypt trước khi lưu vào Database. Đây chỉ là tài khoản demo phục vụ mục đích kiểm thử.
+
+\section*{Phụ lục E: Mã nguồn dự án}
+Toàn bộ mã nguồn của dự án (bao gồm Backend, Frontend, file Docker và LaTeX báo cáo) được lưu trữ và quản lý phiên bản công khai trên GitHub tại địa chỉ:
+\begin{itemize}
+    \item \textbf{Link Repository:} \url{https://github.com/TrungHauNguyen4/CloudService-BTL-Nhom7.git}
+\end{itemize}

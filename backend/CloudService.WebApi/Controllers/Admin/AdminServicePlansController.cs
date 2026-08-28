@@ -7,7 +7,7 @@ namespace CloudService.WebApi.Controllers.Admin;
 
 [ApiController]
 [Route("api/admin/service-plans")]
-// [Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin")]
 public class AdminServicePlansController : ControllerBase
 {
     private readonly IServicePlanService _planService;

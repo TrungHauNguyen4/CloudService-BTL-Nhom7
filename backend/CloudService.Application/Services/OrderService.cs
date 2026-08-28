@@ -22,11 +22,29 @@ public class OrderService : IOrderService
     public async Task<OrderDto> CreateOrderAsync(CreateOrderDto dto)
     {
         var order = _mapper.Map<OrderRequest>(dto);
+        
+        // Cập nhật thông tin khách hàng từ DB nếu có CustomerId
+        if (dto.CustomerId.HasValue)
+        {
+            var user = await _unitOfWork.AppUsers.GetByIdAsync(dto.CustomerId.Value);
+            if (user != null)
+            {
+                order.CustomerName = string.IsNullOrWhiteSpace(user.FullName) ? user.Username : user.FullName;
+                order.Email = user.Email;
+            }
+        }
+        
         var basePrice = 150000m;
         // Fetch actual plan price if PlanId is provided
         if (dto.PlanId.HasValue)
         {
             var plan = await _unitOfWork.ServicePlans.GetByIdWithDetailsAsync(dto.PlanId.Value);
+            
+            if (plan != null && !plan.IsActive)
+            {
+                throw new Exception("Gói dịch vụ đã ngừng hoạt động và không thể đặt hàng.");
+            }
+            
             if (plan != null && plan.Prices != null && plan.Prices.Any())
             {
                 var monthlyPriceObj = plan.Prices.FirstOrDefault(p => p.BillingCycle == BillingCycle.Monthly);

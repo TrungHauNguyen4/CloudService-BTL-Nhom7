@@ -59,6 +59,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Force all inputs to have white background and black text without exception */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]), 
+textarea, 
+select {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):disabled, 
+textarea:disabled, 
+select:disabled {
+  background-color: #f1f5f9 !important;
+  color: #64748b !important;
+  cursor: not-allowed !important;
+}
+
 /* Custom Scrollbar for a premium look */
 ::-webkit-scrollbar {
   width: 8px;

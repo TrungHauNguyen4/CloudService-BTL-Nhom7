@@ -1,0 +1,92 @@
+\chapter{KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN}
+
+\section{Đánh giá kết quả đạt được}
+Kết thúc quá trình thực hiện đồ án môn học Phát triển phần mềm hướng đối tượng, nhóm đã hoàn thành các mục tiêu và yêu cầu từ giảng viên đề ra. Những kết quả nổi bật bao gồm:
+
+\subsection{Khía cạnh Kỹ thuật}
+\begin{itemize}
+    \item Làm chủ và ứng dụng nhuần nhuyễn mô hình \textbf{Clean Architecture} đa tầng (4 project: Domain, Application, Infrastructure, WebApi).
+    \item Khai thác hiệu quả các nguyên lý thiết kế \textbf{SOLID} và \textbf{Design Patterns} (Repository, Unit of Work, Middleware, Dependency Injection) để tạo ra một lõi phần mềm Backend linh hoạt, dễ nâng cấp.
+    \item Xây dựng \textbf{37 RESTful API endpoints} hoàn chỉnh phục vụ cả trang công khai và trang quản trị.
+    \item Phát triển \textbf{10 trang Landing Page} + \textbf{8 trang Admin Dashboard} với giao diện hiện đại sử dụng Next.js App Router và Tailwind CSS.
+\end{itemize}
+
+\subsection{Khía cạnh Nghiệp vụ}
+\begin{itemize}
+    \item Xây dựng thành công hệ thống website bán dịch vụ Cloud (VPS, Hosting, Domain) bao gồm toàn bộ luồng nghiệp vụ từ người dùng tra cứu, đăng ký đến phía admin phê duyệt và thống kê.
+    \item Hệ thống xử lý tốt cơ chế bảo mật: xác thực JWT với AccessToken + RefreshToken, mã hóa mật khẩu bằng BCrypt, phân quyền theo Role (Admin, Editor).
+    \item Tích hợp thành công các tính năng nâng cao: sinh mã QR cho gói dịch vụ, xuất báo cáo Excel, ghi nhật ký hệ thống (Audit Log).
+\end{itemize}
+
+\subsection{Khía cạnh Quy trình}
+\begin{itemize}
+    \item Vận dụng thực tế mô hình phát triển phần mềm thông qua việc chia nhỏ tính năng trên feature branch.
+    \item Tích hợp luồng CI/CD (GitHub Actions) tự động build và chạy \textbf{16 Unit Tests} (vượt yêu cầu tối thiểu 15).
+    \item Chuẩn hóa triển khai môi trường qua Docker: \texttt{Dockerfile} cho Backend và \texttt{docker-compose.yml} (API + SQL Server 2022).
+\end{itemize}
+
+Dự án không chỉ là minh chứng cho lượng kiến thức được lĩnh hội trong môn học mà còn giúp nhóm rèn luyện khả năng phối hợp làm việc thực tế, xử lý các luồng hợp nhất mã nguồn (Merge/Pull Request) trên Git.
+
+\section{Bảng tổng hợp kết quả đối chiếu đề bài}
+Bảng~\ref{tab:ket_qua} đối chiếu các tiêu chí chấm điểm từ đề bài với kết quả đạt được thực tế.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Đối chiếu kết quả đạt được với yêu cầu đề bài}
+    \label{tab:ket_qua}
+    \begin{tabular}{|p{7cm}|c|p{4.5cm}|}
+        \hline
+        \textbf{Tiêu chí} & \textbf{Điểm} & \textbf{Kết quả đạt được} \\
+        \hline
+        Clean Architecture + SOLID + Design Patterns & 20 & 4 tầng, 5 SOLID, 4 Patterns \\
+        \hline
+        Backend API đầy đủ, REST, ORM & 20 & 37 endpoints, EF Core, SQL Server \\
+        \hline
+        Frontend đầy đủ, responsive & 15 & 18+ trang, Responsive, SEO \\
+        \hline
+        Bảo mật: JWT + Role, Hash, QR & 10 & JWT + Refresh, BCrypt, QR Code \\
+        \hline
+        Unit Testing $\geq$ 15 tests & 10 & 16 tests (xUnit + Moq) \\
+        \hline
+        Git + CI/CD + Docker & 10 & GitHub Actions, Docker Compose \\
+        \hline
+        Báo cáo + Thuyết trình & 10 & Báo cáo LaTeX 5 chương \\
+        \hline
+        Vấn đáp & 5 & (Tại buổi demo) \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\section{Phân công công việc}
+Để có được một dự án phần mềm hoàn thiện, nhóm đã có sự phân bổ hợp lý nhiệm vụ, phát huy thế mạnh của từng thành viên:
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{|c|p{3.5cm}|p{8.5cm}|}
+        \hline
+        \textbf{STT} & \textbf{Thành viên} & \textbf{Công việc phụ trách} \\
+        \hline
+        1 & [Nguyễn Trung Hậu] & \textbf{Team Lead / DevOps:} Phân tích yêu cầu, thiết kế CSDL (ERD). Xây dựng Backend tầng Domain và Application. Cấu hình Docker, CI/CD (GitHub Actions). Viết Unit Test (16 test cases). \\
+        \hline
+        2 & [Lương Quang Khải] & \textbf{Backend Developer:} Xây dựng RESTful API (14 Controllers, 37 endpoints). Triển khai xác thực JWT (Login, Refresh Token, Change Password), BCrypt hash, QR Code, Excel Export. Cấu hình Middleware (Audit, Exception). \\
+        \hline
+        3 & [Võ Phụng Tiên] & \textbf{Frontend Developer (Public):} Lập trình 10 trang Landing Page (Trang chủ, Giới thiệu, Dịch vụ, Bảng giá, Tin tức, Liên hệ, Đối tác, Khách hàng). Kết nối API cho form gửi đơn hàng và đăng ký affiliate. Responsive + Hamburger menu. \\
+        \hline
+        4 & [Phan Thành Vinh] & \textbf{Frontend Developer (Admin):} Lập trình 8 trang Admin Dashboard (Dashboard, Services, News, Orders, Affiliates, Promotions, Analytics, Audit Logs). Kết nối API CRUD. Viết báo cáo tổng kết đồ án. \\
+        \hline
+    \end{tabular}
+    \caption{Bảng phân công công việc thực hiện dự án của nhóm}
+    \label{tab:phan_cong}
+\end{table}
+
+\section{Hạn chế và Hướng phát triển trong tương lai}
+Vì giới hạn thời gian thực hiện, hệ thống vẫn còn một số khía cạnh có thể tiếp tục nghiên cứu và mở rộng:
+\begin{itemize}
+    \item \textbf{Thanh toán điện tử (E-Payment):} Hiện tại tính năng đặt hàng dừng lại ở khâu ``Ghi nhận yêu cầu'', trong tương lai dự án có thể tích hợp API của các cổng thanh toán (như VNPay, MoMo) để tự động hóa khâu phê duyệt hóa đơn.
+    \item \textbf{Tối ưu hóa hiệu năng (Caching):} Áp dụng bộ đệm (như Redis) ở tầng Backend để lưu trữ nhanh các truy vấn lặp lại (Bảng giá, Tin tức), giúp giảm tải cho cơ sở dữ liệu.
+    \item \textbf{Quản lý Vi dịch vụ (Microservices):} Nếu quy mô ứng dụng mở rộng (số lượng khách hàng lớn), kiến trúc có thể được tách nhỏ thành các services độc lập (ví dụ: Identity Service, Order Service) để linh hoạt trong việc Scale-up.
+    \item \textbf{Logging tập trung:} Tích hợp Serilog với Seq hoặc Elasticsearch để giám sát log tập trung, giúp debug và theo dõi hiệu suất hệ thống production.
+    \item \textbf{Đăng ký tài khoản khách hàng:} Bổ sung luồng Register/Login riêng cho khách hàng (không phải Admin) để có thể theo dõi lịch sử đơn hàng cá nhân.
+\end{itemize}
+
+Đồ án đã tạo ra một nền móng công nghệ vững chắc. Với những hướng phát triển trên, sản phẩm hoàn toàn có tiềm năng để thương mại hóa trong môi trường công nghiệp điện toán đám mây.

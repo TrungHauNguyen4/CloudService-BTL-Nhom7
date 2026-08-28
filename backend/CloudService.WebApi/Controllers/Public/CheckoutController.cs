@@ -17,11 +17,22 @@ public class CheckoutController : ControllerBase
     }
 
     [HttpGet("validate-code")]
-    public async Task<IActionResult> ValidateCode([FromQuery] string code)
+    public async Task<IActionResult> ValidateCode([FromQuery] string code, [FromQuery] Guid? planId)
     {
         if (string.IsNullOrWhiteSpace(code))
         {
             return BadRequest(new { message = "Mã không được để trống" });
+        }
+        
+        if (!planId.HasValue)
+        {
+            return BadRequest(new { message = "Thiếu thông tin gói dịch vụ." });
+        }
+
+        var plan = await _context.ServicePlans.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == planId.Value);
+        if (plan == null || !plan.IsActive) 
+        {
+            return BadRequest(new { message = "Gói dịch vụ không tồn tại hoặc đã ngừng hoạt động." });
         }
 
         // 1. Kiểm tra Mã Khuyến Mãi (Promotion)
@@ -30,6 +41,12 @@ public class CheckoutController : ControllerBase
         
         if (promotion != null)
         {
+            // Kiểm tra xem Promotion này có được áp dụng cho Category của gói này không
+            if (plan.Category.PromotionId != promotion.Id)
+            {
+                return BadRequest(new { message = "Mã khuyến mãi không áp dụng cho gói dịch vụ này." });
+            }
+
             return Ok(new
             {
                 type = "promotion",

@@ -26,7 +26,7 @@ Một doanh nghiệp **cung cấp dịch vụcloud** (tương tự `https://viet
 
 Nhóm sinh viên đóng vai trò đội phát triển, xây dựng hệthống gồm **Backend Web API (.NET)** và **Frontend (Next.js hoặc Blazor)** . 
 
-## **2. Kiến trúc và công nghệbắt buộc** 
+## **2. Kiến trúc và công nghệ bắt buộc** 
 
 ### **– 2.1. Backend ASP.NET Core Web API (.NET 10)** 
 

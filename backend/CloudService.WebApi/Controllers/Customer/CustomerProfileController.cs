@@ -43,6 +43,7 @@ public class CustomerProfileController : ControllerBase
         {
             user.FullName,
             user.Email,
+            user.Phone,
             user.CompanyName,
             user.Is2faEnabled,
             ApiKeys = apiKeys
@@ -52,6 +53,7 @@ public class CustomerProfileController : ControllerBase
     public class UpdateProfileDto
     {
         public string FullName { get; set; } = string.Empty;
+        public string? Phone { get; set; }
         public string? CompanyName { get; set; }
     }
 
@@ -63,6 +65,7 @@ public class CustomerProfileController : ControllerBase
         if (user == null) return Unauthorized();
 
         user.FullName = dto.FullName;
+        user.Phone = dto.Phone;
         user.CompanyName = dto.CompanyName;
 
         await _unitOfWork.SaveChangesAsync();
@@ -99,4 +102,25 @@ public class CustomerProfileController : ControllerBase
     }
     
     public class ApiKeyRequest { public string? Name { get; set; } }
+
+    [HttpGet("support-tickets")]
+    public async Task<IActionResult> GetMyTickets()
+    {
+        var userId = GetUserId();
+        var tickets = await _unitOfWork.SupportTickets.Find(t => t.CustomerId == userId)
+            .OrderByDescending(t => t.CreatedAt)
+            .Select(t => new {
+                t.Id,
+                t.TicketCode,
+                t.Subject,
+                t.Message,
+                t.AdminReply,
+                t.Status,
+                t.CreatedAt,
+                CustomerServiceName = t.CustomerService != null ? t.CustomerService.Name : null
+            })
+            .ToListAsync();
+
+        return Ok(tickets);
+    }
 }

@@ -67,6 +67,8 @@ export default function ServiceDetailPage() {
           name: plan.category?.name || 'Gói Dịch vụ',
           desc: plan.category?.description || 'Máy chủ ảo hiệu năng cao với 100% NVMe SSD, cam kết uptime 99.99%.',
           color: 'blue',
+          specSchema: plan.category?.specSchema,
+          specsLines: specsLines,
           plans: [
             { 
               name: plan.name, 
@@ -166,10 +168,18 @@ export default function ServiceDetailPage() {
             <thead>
               <tr className="bg-slate-50 text-left">
                 <th className="px-6 py-4 text-sm font-bold text-slate-600">Gói</th>
-                <th className="px-6 py-4 text-sm font-bold text-slate-600">CPU</th>
-                <th className="px-6 py-4 text-sm font-bold text-slate-600">RAM</th>
-                <th className="px-6 py-4 text-sm font-bold text-slate-600">SSD</th>
-                <th className="px-6 py-4 text-sm font-bold text-slate-600">Băng thông</th>
+                {service.specSchema && service.specSchema.length > 0 ? (
+                  service.specSchema.map((schema: string, idx: number) => (
+                    <th key={idx} className="px-6 py-4 text-sm font-bold text-slate-600">{schema}</th>
+                  ))
+                ) : (
+                  <>
+                    <th className="px-6 py-4 text-sm font-bold text-slate-600">CPU</th>
+                    <th className="px-6 py-4 text-sm font-bold text-slate-600">RAM</th>
+                    <th className="px-6 py-4 text-sm font-bold text-slate-600">SSD</th>
+                    <th className="px-6 py-4 text-sm font-bold text-slate-600">Băng thông</th>
+                  </>
+                )}
                 <th className="px-6 py-4 text-sm font-bold text-slate-600">Giá/tháng</th>
                 <th className="px-6 py-4 text-sm font-bold text-slate-600">Giá/năm</th>
                 <th className="px-6 py-4"></th>
@@ -179,10 +189,20 @@ export default function ServiceDetailPage() {
               {service.plans.map((plan: any, idx: number) => (
                 <tr key={idx} className="hover:bg-blue-50/50 transition-colors">
                   <td className="px-6 py-5 font-bold text-slate-900">{plan.name}</td>
-                  <td className="px-6 py-5 text-slate-600 text-sm">{plan.cpu}</td>
-                  <td className="px-6 py-5 text-slate-600 text-sm">{plan.ram}</td>
-                  <td className="px-6 py-5 text-slate-600 text-sm">{plan.ssd}</td>
-                  <td className="px-6 py-5 text-slate-600 text-sm">{plan.bw}</td>
+                  {service.specSchema && service.specSchema.length > 0 ? (
+                    service.specSchema.map((_: string, specIdx: number) => (
+                      <td key={specIdx} className="px-6 py-5 text-slate-600 text-sm">
+                        {service.specsLines[specIdx] || '-'}
+                      </td>
+                    ))
+                  ) : (
+                    <>
+                      <td className="px-6 py-5 text-slate-600 text-sm">{plan.cpu}</td>
+                      <td className="px-6 py-5 text-slate-600 text-sm">{plan.ram}</td>
+                      <td className="px-6 py-5 text-slate-600 text-sm">{plan.ssd}</td>
+                      <td className="px-6 py-5 text-slate-600 text-sm">{plan.bw}</td>
+                    </>
+                  )}
                   <td className="px-6 py-5 font-bold text-slate-900">
                     {plan.monthlyDiscountRate > 0 ? (
                       <div className="flex flex-col">

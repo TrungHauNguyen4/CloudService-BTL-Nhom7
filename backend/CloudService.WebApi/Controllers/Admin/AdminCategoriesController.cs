@@ -7,7 +7,7 @@ namespace CloudService.WebApi.Controllers.Admin;
 
 [ApiController]
 [Route("api/admin/service-categories")]
-[Authorize(Roles = "Admin,Editor")]
+[Authorize(Roles = "Admin")]
 public class AdminCategoriesController : ControllerBase
 {
     private readonly ICategoryService _categoryService;
