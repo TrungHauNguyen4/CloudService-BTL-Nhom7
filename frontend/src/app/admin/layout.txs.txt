@@ -1,0 +1,184 @@
+'use client';
+
+import { useState } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import { Bold, Italic, Heading2, Save, X } from 'lucide-react';
+
+interface NewsPost {
+  id: number;
+  title: string;
+  content: string;
+  createdAt: string;
+  status: 'Draft' | 'Published';
+}
+
+export default function NewsAdminPage() {
+  const [isEditing, setIsEditing] = useState(false);
+  const [title, setTitle] = useState('');
+  const [posts, setPosts] = useState<NewsPost[]>([
+    {
+      id: 1,
+      title: 'Cập nhật tính năng mới tháng 8',
+      content: 'Chúng tôi vừa phát hành các tính năng mới...',
+      createdAt: '2026-08-20',
+      status: 'Published',
+    },
+  ]);
+
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: '<p>Bắt đầu viết nội dung tại đây...</p>',
+  });
+
+  const handleSave = () => {
+    if (!title.trim() || !editor?.getText().trim()) {
+      alert('Vui lòng điền đầy đủ tiêu đề và nội dung!');
+      return;
+    }
+
+    const newPost: NewsPost = {
+      id: posts.length + 1,
+      title,
+      content: editor.getHTML(),
+      createdAt: new Date().toISOString().split('T')[0],
+      status: 'Draft',
+    };
+
+    setPosts([newPost, ...posts]);
+    setTitle('');
+    editor?.commands.setContent('<p>Bắt đầu viết nội dung tại đây...</p>');
+    setIsEditing(false);
+    alert('Bài viết đã được lưu!');
+  };
+
+  if (isEditing) {
+    return (
+      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+        <div className="flex justify-between items-center mb-6 border-b pb-4">
+          <h2 className="text-2xl font-bold">Viết Bài Mới</h2>
+          <div className="space-x-3">
+            <button
+              onClick={() => {
+                setIsEditing(false);
+                setTitle('');
+                editor?.commands.setContent('<p>Bắt đầu viết nội dung tại đây...</p>');
+              }}
+              className="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
+            >
+              <X size={18} />
+              Hủy
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700 transition flex items-center gap-2"
+            >
+              <Save size={18} />
+              Lưu Bài
+            </button>
+          </div>
+        </div>
+
+        <input
+          type="text"
+          placeholder="Tiêu đề bài viết..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full text-3xl font-black border-none outline-none mb-6 placeholder-slate-300"
+        />
+
+        {/* Thanh công cụ TipTap */}
+        <div className="flex gap-2 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200 flex-wrap">
+          <button
+            onClick={() => editor?.chain().focus().toggleBold().run()}
+            className={`px-3 py-2 rounded font-bold flex items-center gap-1 transition ${
+              editor?.isActive('bold')
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Bold size={16} />
+            Đậm
+          </button>
+          <button
+            onClick={() => editor?.chain().focus().toggleItalic().run()}
+            className={`px-3 py-2 rounded italic flex items-center gap-1 transition ${
+              editor?.isActive('italic')
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Italic size={16} />
+            Nghiêng
+          </button>
+          <button
+            onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+            className={`px-3 py-2 rounded font-bold flex items-center gap-1 transition ${
+              editor?.isActive('heading', { level: 2 })
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Heading2 size={16} />
+            H2
+          </button>
+        </div>
+
+        {/* Khu vực soạn thảo */}
+        <div className="border border-slate-200 rounded-lg p-4 min-h-[400px] bg-white focus-within:ring-2 focus-within:ring-blue-500">
+          <EditorContent
+            editor={editor}
+            className="prose prose-sm max-w-none focus:outline-none"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-slate-800">Quản Lý Tin Tức</h1>
+        <button
+          onClick={() => setIsEditing(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition flex items-center gap-2"
+        >
+          + Viết Bài Mới
+        </button>
+      </div>
+
+      {posts.length === 0 ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center">
+          <p className="text-slate-500 mb-4">Chưa có bài viết nào. Hãy bấm "Viết Bài Mới" để bắt đầu.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <div key={post.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-slate-800 mb-2">{post.title}</h3>
+                  <p className="text-slate-600 text-sm line-clamp-2">{post.content.replace(/<[^>]*>/g, '')}</p>
+                  <p className="text-slate-400 text-xs mt-3">{post.createdAt}</p>
+                </div>
+                <div className="flex items-center gap-3 ml-4">
+                  <span
+                    className={`text-xs font-bold px-3 py-1 rounded-full ${
+                      post.status === 'Published'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-amber-100 text-amber-700'
+                    }`}
+                  >
+                    {post.status}
+                  </span>
+                  <button className="text-blue-600 hover:text-blue-700 font-semibold text-sm">Sửa</button>
+                  <button className="text-rose-600 hover:text-rose-700 font-semibold text-sm">Xóa</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
