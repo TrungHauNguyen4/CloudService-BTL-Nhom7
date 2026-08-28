@@ -30,7 +30,9 @@ public class AuthService : IAuthService
         var user = new CloudService.Domain.Entities.AppUser
         {
             Username = dto.FullName,
+            FullName = dto.FullName,
             Email = dto.Email,
+            Phone = dto.Phone,
             PasswordHash = _passwordHashService.Hash(dto.Password),
             Role = CloudService.Domain.Enums.UserRole.Customer
         };

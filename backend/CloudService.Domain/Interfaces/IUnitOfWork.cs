@@ -16,6 +16,7 @@ public interface IUnitOfWork : IDisposable
     IGenericRepository<CloudService.Domain.Entities.Invoice> Invoices { get; }
     IGenericRepository<CloudService.Domain.Entities.ApiKey> ApiKeys { get; }
     IGenericRepository<CloudService.Domain.Entities.SystemSetting> SystemSettings { get; }
+    IGenericRepository<CloudService.Domain.Entities.SupportTicket> SupportTickets { get; }
 
     Task<int> SaveChangesAsync(); // Lưu tất cả vào DB cùng 1 lúc
 }

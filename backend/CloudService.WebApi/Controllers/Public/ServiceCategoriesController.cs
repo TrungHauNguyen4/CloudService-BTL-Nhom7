@@ -14,5 +14,8 @@ public class ServiceCategoriesController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
-        => Ok(await _categoryService.GetAllAsync());
+    {
+        var categories = await _categoryService.GetAllAsync();
+        return Ok(categories.Where(c => c.IsActive));
+    }
 }

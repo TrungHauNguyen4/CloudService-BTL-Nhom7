@@ -12,7 +12,7 @@ interface ApiKey {
 }
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState({ fullName: '', email: '', companyName: '', is2faEnabled: false });
+  const [profile, setProfile] = useState({ fullName: '', email: '', phone: '', companyName: '', is2faEnabled: false });
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -28,6 +28,7 @@ export default function SettingsPage() {
       setProfile({
         fullName: res.data.fullName,
         email: res.data.email,
+        phone: res.data.phone || '',
         companyName: res.data.companyName || '',
         is2faEnabled: res.data.is2faEnabled
       });
@@ -45,6 +46,7 @@ export default function SettingsPage() {
     try {
       await apiClient.put('/customer/profile', {
         fullName: profile.fullName,
+        phone: profile.phone,
         companyName: profile.companyName
       });
       setMessage('Lưu thay đổi thành công!');
@@ -107,16 +109,20 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Họ và Tên</label>
-                  <input type="text" value={profile.fullName} onChange={(e) => setProfile({...profile, fullName: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-slate-700" />
+                  <input type="text" value={profile.fullName} onChange={(e) => setProfile({...profile, fullName: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" placeholder="Nhập họ và tên" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Địa chỉ Email</label>
-                  <input type="email" value={profile.email} disabled className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 outline-none cursor-not-allowed" />
+                  <input type="email" value={profile.email} disabled className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-100 text-slate-600 outline-none cursor-not-allowed" />
                   <p className="text-xs text-slate-400 mt-2">Liên hệ Hỗ trợ nếu bạn muốn đổi Email.</p>
                 </div>
-                <div className="md:col-span-2">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Số điện thoại</label>
+                  <input type="tel" value={profile.phone} onChange={(e) => setProfile({...profile, phone: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" placeholder="Nhập số điện thoại" />
+                </div>
+                <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Tên Doanh nghiệp / Tổ chức</label>
-                  <input type="text" value={profile.companyName} onChange={(e) => setProfile({...profile, companyName: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-slate-700" />
+                  <input type="text" value={profile.companyName} onChange={(e) => setProfile({...profile, companyName: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" placeholder="Nhập tên doanh nghiệp" />
                 </div>
               </div>
             </section>

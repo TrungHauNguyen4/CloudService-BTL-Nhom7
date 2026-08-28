@@ -7,4 +7,5 @@ public interface IServiceCategoryRepository : IGenericRepository<ServiceCategory
 {
     Task<ServiceCategory?> GetBySlugAsync(string slug);
     Task<IEnumerable<ServiceCategory>> GetActiveCategoriesAsync();//lấy danh mục đang được bật
+    Task<IEnumerable<ServiceCategory>> GetAllWithPromotionsAsync();
 }

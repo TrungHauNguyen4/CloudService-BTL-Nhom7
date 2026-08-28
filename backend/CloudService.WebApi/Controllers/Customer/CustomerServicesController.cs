@@ -46,4 +46,29 @@ public class CustomerServicesController : ControllerBase
 
         return Ok(services);
     }
+
+    [HttpPost("{id}/cancel")]
+    public async Task<IActionResult> CancelService(Guid id)
+    {
+        var userId = GetUserId();
+        var service = await _unitOfWork.CustomerServices.GetByIdAsync(id);
+        
+        if (service == null || service.CustomerId != userId)
+        {
+            return NotFound(new { message = "Không tìm thấy dịch vụ." });
+        }
+
+        if (service.Status == CloudService.Domain.Enums.CustomerServiceStatus.Cancelled)
+        {
+            return BadRequest(new { message = "Dịch vụ đã được hủy trước đó." });
+        }
+
+        service.Status = CloudService.Domain.Enums.CustomerServiceStatus.Cancelled;
+        service.UpdatedAt = DateTime.UtcNow;
+
+        _unitOfWork.CustomerServices.Update(service);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Ok(new { message = "Đã hủy gói dịch vụ thành công." });
+    }
 }

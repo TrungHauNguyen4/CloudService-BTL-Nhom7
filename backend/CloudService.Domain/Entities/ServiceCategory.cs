@@ -11,6 +11,12 @@ public class ServiceCategory : BaseEntity
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
 
-    // Navigation property: 1 danh mục có nhiều gói dịch vụ
     public ICollection<ServicePlan> ServicePlans { get; set; } = new List<ServicePlan>();
+    
+    // Optional Promotion specific to this category
+    public Guid? PromotionId { get; set; }
+    public Promotion? Promotion { get; set; }
+
+    // JSON string for dynamic spec fields, e.g. ["CPU", "RAM", "Bandwidth"]
+    public string? SpecSchema { get; set; }
 }

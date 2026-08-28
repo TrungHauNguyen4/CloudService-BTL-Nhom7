@@ -142,6 +142,9 @@ namespace CloudService.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Phone")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("RefreshToken")
                         .HasColumnType("nvarchar(max)");
 
@@ -503,14 +506,22 @@ namespace CloudService.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("PromotionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Slug")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SpecSchema")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PromotionId");
 
                     b.ToTable("ServiceCategories");
 
@@ -726,6 +737,59 @@ namespace CloudService.Infrastructure.Migrations
                     b.ToTable("StorageVolumes");
                 });
 
+            modelBuilder.Entity("CloudService.Domain.Entities.SupportTicket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AdminReply")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("CustomerServiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TicketCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("CustomerServiceId");
+
+                    b.ToTable("SupportTickets");
+                });
+
             modelBuilder.Entity("CloudService.Domain.Entities.SystemSetting", b =>
                 {
                     b.Property<Guid>("Id")
@@ -872,6 +936,16 @@ namespace CloudService.Infrastructure.Migrations
                     b.Navigation("Plan");
                 });
 
+            modelBuilder.Entity("CloudService.Domain.Entities.ServiceCategory", b =>
+                {
+                    b.HasOne("CloudService.Domain.Entities.Promotion", "Promotion")
+                        .WithMany()
+                        .HasForeignKey("PromotionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Promotion");
+                });
+
             modelBuilder.Entity("CloudService.Domain.Entities.ServicePlan", b =>
                 {
                     b.HasOne("CloudService.Domain.Entities.ServiceCategory", "Category")
@@ -892,6 +966,21 @@ namespace CloudService.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("CloudService.Domain.Entities.SupportTicket", b =>
+                {
+                    b.HasOne("CloudService.Domain.Entities.AppUser", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.HasOne("CloudService.Domain.Entities.CustomerService", "CustomerService")
+                        .WithMany()
+                        .HasForeignKey("CustomerServiceId");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("CustomerService");
                 });
 
             modelBuilder.Entity("CloudService.Domain.Entities.AppUser", b =>

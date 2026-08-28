@@ -18,6 +18,12 @@ public class ServiceCategoryRepository
 
     public async Task<IEnumerable<ServiceCategory>> GetActiveCategoriesAsync()
         => await _dbSet
+            .Include(c => c.Promotion)
             .Where(c => c.IsActive)
+            .ToListAsync();
+
+    public async Task<IEnumerable<ServiceCategory>> GetAllWithPromotionsAsync()
+        => await _dbSet
+            .Include(c => c.Promotion)
             .ToListAsync();
 }

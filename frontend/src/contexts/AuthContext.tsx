@@ -57,6 +57,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(decodedUser);
       } else {
         Cookies.remove('token');
+        Cookies.remove('token', { path: '/' });
+        Cookies.remove('token', { path: '/dashboard' });
+        Cookies.remove('token', { path: '/', domain: window.location.hostname });
         setUser(null);
       }
     } else {
@@ -79,12 +82,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [pathname, user, loading, router]);
 
   const login = (token: string) => {
-    Cookies.set('token', token, { expires: 1 });
+    Cookies.set('token', token, { expires: 1, path: '/' });
     checkAuth();
   };
 
   const logout = () => {
     Cookies.remove('token');
+    Cookies.remove('token', { path: '/' });
+    Cookies.remove('token', { path: '/dashboard' });
+    Cookies.remove('token', { path: '/', domain: window.location.hostname });
     setUser(null);
     // Refresh trang hoàn toàn để xóa sạch bộ đệm JS memory và trở thành khách vãng lai
     window.location.href = '/dang-nhap'; 

@@ -25,8 +25,11 @@ apiClient.interceptors.response.use((response) => {
 }, (error) => {
   if (error.response && error.response.status === 401) {
     if (typeof window !== 'undefined') {
-      Cookies.remove('token'); // Xóa token cũ bị lỗi
-      window.location.href = '/dang-nhap'; // Ép người dùng văng ra trang Login
+      Cookies.remove('token'); 
+      Cookies.remove('token', { path: '/' }); 
+      Cookies.remove('token', { path: '/dashboard' }); 
+      Cookies.remove('token', { path: '/', domain: window.location.hostname });
+      window.location.href = '/dang-nhap'; 
     }
   }
   return Promise.reject(error);

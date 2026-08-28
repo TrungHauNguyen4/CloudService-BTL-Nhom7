@@ -1,0 +1,15 @@
+\babel@toc {vietnamese}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {II.1}{\ignorespaces Sơ đồ Use Case tổng quát của hệ thống Website bán dịch vụ Cloud}}{6}{figure.2.1}%
+\contentsline {figure}{\numberline {II.2}{\ignorespaces Sơ đồ Hoạt động nghiệp vụ Đặt hàng dịch vụ}}{8}{figure.2.2}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {III.1}{\ignorespaces Sơ đồ khối Clean Architecture trong dự án}}{10}{figure.3.1}%
+\contentsline {figure}{\numberline {III.2}{\ignorespaces Sơ đồ thực thể liên kết (ERD)}}{11}{figure.3.2}%
+\contentsline {figure}{\numberline {III.3}{\ignorespaces Sơ đồ Tuần tự luồng xử lý xác thực đăng nhập cấp phát JWT}}{14}{figure.3.3}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {IV.1}{\ignorespaces Giao diện trang chủ (Landing Page)}}{16}{figure.4.1}%
+\contentsline {figure}{\numberline {IV.2}{\ignorespaces Giao diện trang Bảng giá -- Chuyển đổi Tháng/Năm và hiển thị mã QR}}{16}{figure.4.2}%
+\contentsline {figure}{\numberline {IV.3}{\ignorespaces Giao diện Bảng điều khiển Quản trị viên (Admin Dashboard)}}{17}{figure.4.3}%
+\contentsline {figure}{\numberline {IV.4}{\ignorespaces Kết quả chạy 16 Unit Test toàn bộ PASSED}}{18}{figure.4.4}%
+\addvspace {10\p@ }

@@ -13,6 +13,7 @@ export default function AdminAccountsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [role, setRole] = useState(0);
+  const [newPassword, setNewPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -46,23 +47,28 @@ export default function AdminAccountsPage() {
   const handleEditClick = (user: any) => {
     setEditingUser(user);
     setRole(user.role);
+    setNewPassword('');
     setShowEditModal(true);
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingUser) return;
-    
     setIsSubmitting(true);
     try {
-      await apiClient.put(`/admin/customers/${editingUser.id}`, {
-        role: role
-      });
+      // Gọi API cập nhật thông tin chung (Role)
+      await apiClient.put(`/admin/customers/${editingUser.id}`, { role: role, addCredit: 0 });
+      
+      // Nếu có nhập mật khẩu mới, gọi API đặt lại mật khẩu
+      if (newPassword.trim()) {
+        await apiClient.put(`/admin/customers/${editingUser.id}/reset-password`, { newPassword: newPassword });
+      }
+
+      setAccounts(accounts.map(a => a.id === editingUser.id ? { ...a, role: role } : a));
       setShowEditModal(false);
-      fetchAccounts(); // Refresh
-      alert("Cập nhật thành công!");
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Cập nhật thất bại!");
+      alert("Cập nhật tài khoản thành công!");
+    } catch (error) {
+      console.error(error);
+      alert("Đã xảy ra lỗi khi cập nhật!");
     } finally {
       setIsSubmitting(false);
     }
@@ -187,12 +193,24 @@ export default function AdminAccountsPage() {
                   <select
                     value={role}
                     onChange={(e) => setRole(parseInt(e.target.value))}
-                    className="w-full pl-9 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                    className="w-full pl-9 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-slate-900"
                   >
                     <option value={0}>Khách Hàng</option>
                     <option value={1}>Admin</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100">
+                <label className="block text-sm font-medium mb-1">Mật Khẩu Mới (Tùy chọn)</label>
+                <input
+                  type="text"
+                  placeholder="Để trống nếu không muốn đổi"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 text-slate-900"
+                />
+                <p className="text-xs text-slate-500 mt-1">Sử dụng tính năng này để cấp lại mật khẩu cho khách hàng quên mật khẩu.</p>
               </div>
 
               <div className="flex gap-3 pt-4">

@@ -89,7 +89,7 @@ function CheckoutContent() {
     setDiscountError('');
     setAppliedDiscount(null);
     try {
-      const res = await apiClient.get(`/checkout/validate-code?code=${discountCode}`);
+      const res = await apiClient.get(`/checkout/validate-code?code=${discountCode}&planId=${plan?.id}`);
       const discount = res.data;
       
       if (billingCycle !== 1) {
@@ -152,12 +152,14 @@ function CheckoutContent() {
       let customerId = null;
       let customerName = 'Khách Hàng';
       let email = 'khachhang@cloudservice.vn';
+      let phone = 'Chưa cung cấp';
       
       if (token) {
         const payload = JSON.parse(atob(token.split('.')[1]));
         email = payload.email || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] || email;
         customerName = payload.name || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || customerName;
         customerId = payload.nameid || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+        phone = payload.mobilephone || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/mobilephone"] || 'Chưa cung cấp';
       }
 
       await apiClient.post('/order-requests', {
@@ -166,7 +168,7 @@ function CheckoutContent() {
         billingCycle: billingCycle,
         customerName: customerName,
         email: email,
-        phone: '0000000000',
+        phone: phone,
         customerId: customerId,
         discountCode: appliedDiscount?.code || null
       });

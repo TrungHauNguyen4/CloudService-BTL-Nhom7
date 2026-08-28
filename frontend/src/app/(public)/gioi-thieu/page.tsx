@@ -105,10 +105,7 @@ export default async function AboutPage() {
             <div className="absolute -inset-4 bg-gradient-to-tr from-blue-100 to-indigo-50 rounded-[3rem] transform -rotate-3 z-0"></div>
             <div className="relative z-10 bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100">
               <div className="aspect-video bg-slate-100 rounded-xl mb-6 overflow-hidden relative">
-                {/* Ở môi trường thực tế, bạn có thể thay div này bằng thẻ <img src="/office.jpg" /> */}
-                <div className="absolute inset-0 bg-slate-800 flex items-center justify-center text-slate-500 font-mono text-sm">
-                  [Hình ảnh Data Center / Văn phòng làm việc]
-                </div>
+                <img src="/data-center.jpg" alt="Data Center" className="w-full h-full object-cover" />
               </div>
               <p className="italic text-slate-500 text-sm text-center">
                 "Chúng tôi không chỉ bán Server, chúng tôi cung cấp sự yên tâm."
@@ -151,7 +148,7 @@ export default async function AboutPage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/dang-ky" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-full transition-all shadow-lg shadow-blue-600/30 transform hover:-translate-y-1">
-            Bắt đầu dùng thử miễn phí
+            Bắt đầu
           </Link>
           <Link href="/lien-he" className="bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 font-bold py-4 px-8 rounded-full transition-all">
             Gặp gỡ chuyên gia

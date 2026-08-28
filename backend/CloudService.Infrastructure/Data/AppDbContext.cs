@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<Invoice> Invoices { get; set; } = null!;
     public DbSet<ApiKey> ApiKeys { get; set; } = null!;
     public DbSet<StorageVolume> StorageVolumes { get; set; } = null!;
+    public DbSet<SupportTicket> SupportTickets { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -86,6 +87,14 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Code).IsRequired().HasMaxLength(50);
             entity.HasIndex(e => e.Code).IsUnique();
+        });
+
+        modelBuilder.Entity<ServiceCategory>(entity =>
+        {
+            entity.HasOne(e => e.Promotion)
+                  .WithMany()
+                  .HasForeignKey(e => e.PromotionId)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         // ===== OrderRequest =====

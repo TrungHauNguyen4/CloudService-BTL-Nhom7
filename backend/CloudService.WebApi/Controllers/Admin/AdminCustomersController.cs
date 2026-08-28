@@ -70,6 +70,28 @@ public class AdminCustomersController : ControllerBase
         return Ok(new { message = "Cập nhật thành công", balance = user.CreditBalance, role = user.Role });
     }
 
+    public class ResetPasswordDto
+    {
+        public string NewPassword { get; set; } = string.Empty;
+    }
+
+    [HttpPut("{id}/reset-password")]
+    public async Task<IActionResult> ResetPassword(Guid id, [FromBody] ResetPasswordDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.NewPassword)) 
+            return BadRequest(new { message = "Mật khẩu không hợp lệ" });
+
+        var user = await _unitOfWork.AppUsers.GetByIdAsync(id);
+        if (user == null) return NotFound(new { message = "Không tìm thấy người dùng" });
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        
+        _unitOfWork.AppUsers.Update(user);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Ok(new { message = "Đặt lại mật khẩu thành công!" });
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAccount(Guid id)
     {

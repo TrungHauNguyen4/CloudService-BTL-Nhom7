@@ -1,0 +1,127 @@
+\documentclass[13pt,a4paper]{extreport}
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc} % Hỗ trợ tiếng Việt
+\usepackage[vietnamese]{babel}
+\usepackage{mathptmx} % Font Times New Roman
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{geometry}
+% Căn lề: Trái 3cm (để đóng gáy), Phải 2cm, Trên 2cm, Dưới 2cm cho toàn bộ các trang
+\geometry{a4paper, left=3cm, right=2cm, top=2cm, bottom=2cm}
+
+\usepackage{setspace}
+\setstretch{1.2} % Line spacing Multiply at 1.2
+
+\setlength{\parskip}{6pt} % Spacing After 6pt
+\setlength{\parindent}{1cm} % First line indent 1cm
+
+\usepackage{eso-pic}
+\usepackage{tikz}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+% Định dạng tiêu đề chương có đánh số: CHƯƠNG I: TÊN CHƯƠNG
+\titleformat{\chapter}[block]
+  {\normalfont\huge\bfseries}
+  {\chaptertitlename\ \thechapter:}
+  {0.5em}
+  {\MakeUppercase}
+
+% Định dạng tiêu đề chương không đánh số (Mở đầu, Lời cảm ơn...)
+\titleformat{name=\chapter,numberless}[block]
+  {\normalfont\huge\bfseries\centering}
+  {}
+  {0pt}
+  {\MakeUppercase}
+
+% Đổi tên các mục mặc định sang tiếng Việt và in hoa
+\addto\captionsvietnamese{%
+  \renewcommand{\chaptername}{CHƯƠNG}%
+  \renewcommand{\contentsname}{MỤC LỤC}%
+  \renewcommand{\listfigurename}{MỤC LỤC HÌNH ẢNH}%
+}
+
+% Đánh số chương bằng số La Mã I, II, III...
+\renewcommand{\thechapter}{\Roman{chapter}}
+% Đánh số mục (section) sử dụng số Ả Rập 1.1, 1.1.1...
+\renewcommand{\thesection}{\arabic{chapter}.\arabic{section}}
+\renewcommand{\thesubsection}{\arabic{chapter}.\arabic{section}.\arabic{subsection}}
+
+\begin{document}
+
+% ------------------- PHẦN TRƯỚC (KHÔNG ĐÁNH SỐ TRANG) -------------------
+\pagestyle{empty}
+\fancypagestyle{plain}{ % Ghi đè trang đầu của chương để không có số trang
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+% Trang bìa
+\include{bia}
+
+% Lời cảm ơn
+\include{loi_cam_on}
+
+% Danh sách thành viên
+\include{danh_sach_thanh_vien}
+
+% Mục lục
+\tableofcontents
+\cleardoublepage
+
+% Mục lục hình ảnh
+\listoffigures
+\cleardoublepage
+
+% Mục lục từ viết tắt
+\include{tu_viet_tat}
+
+% ------------------- PHẦN NỘI DUNG -------------------
+% Thiết lập Header, Footer cho toàn bộ văn bản có đánh số trang
+\pagestyle{fancy}
+\fancyhf{}
+\fancyheadoffset{0pt}
+\fancyfootoffset{0pt}
+\setlength{\headwidth}{\textwidth}
+\fancyhead[L]{BÁO CÁO BÀI TẬP LỚN: WEBSITE BÁN DỊCH VỤ CLOUD} % Header trái
+\fancyfoot[L]{Người thực hiện: Nhóm 7} % Footer trái
+\fancyfoot[R]{\thepage} % Số trang
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\fancypagestyle{plain}{ % Áp dụng Header/Footer cho cả trang bắt đầu chương
+  \fancyhf{}
+  \fancyheadoffset{0pt}
+  \fancyfootoffset{0pt}
+  \fancyhead[L]{BÁO CÁO BÀI TẬP LỚN: WEBSITE BÁN DỊCH VỤ CLOUD}
+  \fancyfoot[L]{Người thực hiện: Nhóm 7}
+  \fancyfoot[R]{\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0.4pt}
+}
+
+% Mở đầu (Bắt đầu đánh số trang, dùng số La Mã cho phần trước chương 1)
+\pagenumbering{roman}
+\include{mo_dau}
+
+% Các chương chính
+\cleardoublepage
+\pagenumbering{arabic} % Đánh số trang bắt đầu từ 1 cho Chương 1
+\include{chuong1}
+\include{chuong2}
+\include{chuong3}
+\include{chuong4}
+\include{chuong5}
+
+% Tài liệu tham khảo
+\cleardoublepage
+\renewcommand{\bibname}{TÀI LIỆU THAM KHẢO}
+\bibliographystyle{plain}
+\bibliography{tai_lieu_tham_khao}
+
+% Phụ lục
+\include{phu_luc}
+
+\end{document}

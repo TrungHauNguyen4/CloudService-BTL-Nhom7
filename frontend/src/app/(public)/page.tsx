@@ -141,7 +141,7 @@ export default async function PublicHomePage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link href="/dang-ky" className="group relative inline-flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 px-8 rounded-2xl transition-all shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)]">
                 <span className="relative flex items-center gap-2">
-                  Bắt đầu dùng thử miễn phí
+                  Bắt đầu
                   <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                 </span>
               </Link>
