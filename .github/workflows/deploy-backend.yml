@@ -24,7 +24,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore backend/CloudService.WebApi/CloudService.WebApi.csproj
 
-    - name: Publish ung dung (Self-Contained cho Linux)
+    - name: Publish ung dung (Self-Contained)
       run: |
         dotnet publish backend/CloudService.WebApi/CloudService.WebApi.csproj \
           -c Release \
@@ -35,12 +35,13 @@ jobs:
 
     - name: Tao file startup.sh
       run: |
+        chmod +x ./publish/CloudService.WebApi
+        
         echo '#!/bin/bash' > ./publish/startup.sh
         echo 'echo "Starting custom startup script..."' >> ./publish/startup.sh
-        echo 'export DOTNET_ROOT=' >> ./publish/startup.sh
-        echo 'export DOTNET_SHARED_STORE=' >> ./publish/startup.sh
-        echo 'export DOTNET_HOST_PATH=' >> ./publish/startup.sh
-        echo 'chmod +x /home/site/wwwroot/CloudService.WebApi' >> ./publish/startup.sh
+        echo 'unset DOTNET_ROOT' >> ./publish/startup.sh
+        echo 'unset DOTNET_SHARED_STORE' >> ./publish/startup.sh
+        echo 'unset DOTNET_HOST_PATH' >> ./publish/startup.sh
         echo 'exec /home/site/wwwroot/CloudService.WebApi' >> ./publish/startup.sh
         chmod +x ./publish/startup.sh
 
