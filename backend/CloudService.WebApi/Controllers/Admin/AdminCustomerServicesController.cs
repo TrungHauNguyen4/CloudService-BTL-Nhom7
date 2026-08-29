@@ -59,4 +59,30 @@ public class AdminCustomerServicesController : ControllerBase
 
         return Ok(new { message = "Đã xóa và giải phóng dịch vụ thành công." });
     }
+
+    public class UpdateStatusDto
+    {
+        public string Status { get; set; } = string.Empty;
+    }
+
+    [HttpPut("{id}/status")]
+    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusDto dto)
+    {
+        var service = await _unitOfWork.CustomerServices.GetByIdAsync(id);
+        
+        if (service == null)
+        {
+            return NotFound(new { message = "Không tìm thấy dịch vụ." });
+        }
+
+        if (Enum.TryParse<CloudService.Domain.Enums.CustomerServiceStatus>(dto.Status, true, out var newStatus))
+        {
+            service.Status = newStatus;
+            _unitOfWork.CustomerServices.Update(service);
+            await _unitOfWork.SaveChangesAsync();
+            return Ok(new { message = "Cập nhật trạng thái thành công.", status = service.Status.ToString() });
+        }
+
+        return BadRequest(new { message = "Trạng thái không hợp lệ." });
+    }
 }

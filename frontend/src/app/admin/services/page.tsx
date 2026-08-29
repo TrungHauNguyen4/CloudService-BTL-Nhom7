@@ -24,7 +24,7 @@ export default function ServicesPage() {
     monthlyPrice: 0,
     isActive: true
   });
-  const [specItems, setSpecItems] = useState<string[]>([""]);
+  const [specItems, setSpecItems] = useState<string[]>(["", "", "", ""]);
 
   const fetchServices = async () => {
     try {
@@ -84,7 +84,7 @@ export default function ServicesPage() {
       monthlyPrice: 0,
       isActive: true
     });
-    setSpecItems([""]);
+    setSpecItems(["", "", "", ""]);
     setEditingId(null);
     setShowModal(true);
   };
@@ -100,7 +100,8 @@ export default function ServicesPage() {
     // Convert specs string back to array
     const specsString = service.specs || "";
     const parts = specsString.split(/[\n]|\s\/\s/).map((s: string) => s.trim()).filter(Boolean);
-    setSpecItems(parts.length > 0 ? parts : [""]);
+    while (parts.length < 4) parts.push("");
+    setSpecItems(parts.slice(0, 4));
     
     setEditingId(service.id);
     setShowModal(true);
@@ -112,12 +113,7 @@ export default function ServicesPage() {
     setSpecItems(newSpecs);
   };
 
-  const addSpec = () => setSpecItems([...specItems, ""]);
-  
-  const removeSpec = (index: number) => {
-    const newSpecs = specItems.filter((_, i) => i !== index);
-    setSpecItems(newSpecs.length > 0 ? newSpecs : [""]);
-  };
+  // Removed addSpec and removeSpec as the form is now fixed to 4 fields
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -332,78 +328,51 @@ export default function ServicesPage() {
                 </div>
               </div>
 
-              {/* Thông số kỹ thuật - Full Width */}
-              {/* Thông số kỹ thuật - Full Width */}
+              {/* Thông số kỹ thuật - Fixed 4 Fields */}
               <div>
-                {(() => {
-                  const selectedCategory = categories.find(c => c.id === formData.categoryId);
-                  const currentSchema = selectedCategory?.specSchema || [];
-                  const isFixedSchema = currentSchema.length > 0;
-
-                  return (
-                    <>
-                      <div className="flex justify-between items-center mb-2">
-                        <label className="block text-sm font-medium">Thông số kỹ thuật</label>
-                        {!isFixedSchema && (
-                          <button 
-                            type="button" 
-                            onClick={addSpec}
-                            className="text-xs flex items-center gap-1 bg-primary/10 text-primary hover:bg-primary/20 px-2 py-1 rounded transition-colors font-medium"
-                          >
-                            <Plus className="w-3 h-3" /> Thêm mục
-                          </button>
-                        )}
-                      </div>
-                      
-                      {isFixedSchema ? (
-                        <div className="space-y-3 bg-muted/5 p-4 rounded-lg border border-border">
-                          {currentSchema.map((fieldLabel: string, index: number) => (
-                            <div key={index} className="flex items-center gap-4">
-                              <label className="w-1/3 text-sm font-medium text-muted-foreground text-right">{fieldLabel}</label>
-                              <input 
-                                type="text"
-                                value={specItems[index] || ""}
-                                onChange={(e) => handleSpecChange(index, e.target.value)}
-                                className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-background"
-                                placeholder={`Nhập ${fieldLabel}...`}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="space-y-2 border border-border bg-muted/10 p-3 rounded-lg max-h-48 overflow-y-auto">
-                          {specItems.map((spec, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                              <div className="w-6 h-6 shrink-0 flex items-center justify-center bg-muted text-muted-foreground rounded text-xs font-bold">
-                                {index + 1}
-                              </div>
-                              <input 
-                                type="text"
-                                value={spec}
-                                onChange={(e) => handleSpecChange(index, e.target.value)}
-                                className="flex-1 px-3 py-1.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                                placeholder="VD: 1 vCore"
-                              />
-                              <button 
-                                type="button"
-                                onClick={() => removeSpec(index)}
-                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
-                                title="Xóa mục"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
-                          {specItems.length === 0 && (
-                            <div className="text-center py-4 text-muted-foreground text-sm">
-                              Chưa có thông số nào. Hãy bấm "Thêm mục" để bắt đầu.
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
+                <label className="block text-sm font-medium mb-2">Thông số kỹ thuật (Mặc định)</label>
+                <div className="space-y-3 bg-muted/5 p-4 rounded-lg border border-border">
+                  <div className="flex items-center gap-4">
+                    <label className="w-1/3 text-sm font-medium text-muted-foreground text-right">CPU (vCore)</label>
+                    <input 
+                      type="text"
+                      value={specItems[0] || ""}
+                      onChange={(e) => handleSpecChange(0, e.target.value)}
+                      className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-background"
+                      placeholder="VD: 2 vCore"
+                    />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="w-1/3 text-sm font-medium text-muted-foreground text-right">RAM (GB)</label>
+                    <input 
+                      type="text"
+                      value={specItems[1] || ""}
+                      onChange={(e) => handleSpecChange(1, e.target.value)}
+                      className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-background"
+                      placeholder="VD: 4 GB"
+                    />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="w-1/3 text-sm font-medium text-muted-foreground text-right">Ổ cứng (Disk)</label>
+                    <input 
+                      type="text"
+                      value={specItems[2] || ""}
+                      onChange={(e) => handleSpecChange(2, e.target.value)}
+                      className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-background"
+                      placeholder="VD: 50 GB NVMe"
+                    />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="w-1/3 text-sm font-medium text-muted-foreground text-right">Băng thông (Bandwidth)</label>
+                    <input 
+                      type="text"
+                      value={specItems[3] || ""}
+                      onChange={(e) => handleSpecChange(3, e.target.value)}
+                      className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-background"
+                      placeholder="VD: Không giới hạn"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="pt-4 flex gap-3 justify-end border-t mt-4">

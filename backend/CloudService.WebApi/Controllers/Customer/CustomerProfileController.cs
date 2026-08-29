@@ -67,6 +67,8 @@ public class CustomerProfileController : ControllerBase
         user.FullName = dto.FullName;
         user.Phone = dto.Phone;
         user.CompanyName = dto.CompanyName;
+        
+        _unitOfWork.AppUsers.Update(user);
 
         await _unitOfWork.SaveChangesAsync();
         return Ok(new { message = "Cập nhật thành công" });

@@ -77,6 +77,7 @@ public class ServicePlanService : IServicePlanService
 
         plan.Name = updateDto.Name;
         plan.CategoryId = updateDto.CategoryId;
+        plan.Category = null!; // Break navigation tie to force FK update
         plan.Specs = updateDto.Specs;
         plan.IsActive = updateDto.IsActive;
 

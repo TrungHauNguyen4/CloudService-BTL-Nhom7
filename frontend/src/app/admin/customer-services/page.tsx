@@ -33,6 +33,17 @@ export default function AdminCustomerServicesPage() {
     }
   };
 
+  const handleUpdateStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'Running' ? 'Stopped' : 'Running';
+    if (!confirm(`Bạn có chắc muốn ${newStatus === 'Stopped' ? 'Tạm dừng (Khóa)' : 'Kích hoạt lại (Mở khóa)'} dịch vụ này?`)) return;
+    try {
+      await apiClient.put(`/admin/customer-services/${id}/status`, { status: newStatus });
+      fetchServices();
+    } catch (err) {
+      alert("Lỗi khi cập nhật trạng thái.");
+    }
+  };
+
   if (loading) return <div className="p-8">Đang tải danh sách dịch vụ...</div>;
 
   return (
@@ -74,7 +85,7 @@ export default function AdminCustomerServicesPage() {
                       {isCancelled ? 'Đã Hủy' : srv.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right space-x-2">
                     {isCancelled ? (
                       <button 
                         onClick={() => handleDelete(srv.id)}
@@ -83,9 +94,24 @@ export default function AdminCustomerServicesPage() {
                         Xóa & Giải phóng
                       </button>
                     ) : (
-                      <button disabled className="text-slate-400 font-bold text-sm px-4 py-2">
-                        Đang chạy
-                      </button>
+                      <>
+                        <button 
+                          onClick={() => handleUpdateStatus(srv.id, srv.status)}
+                          className={`font-bold text-sm px-4 py-2 rounded-lg transition-colors text-white ${
+                            srv.status === 'Running' 
+                              ? 'bg-amber-500 hover:bg-amber-600' 
+                              : 'bg-emerald-500 hover:bg-emerald-600'
+                          }`}
+                        >
+                          {srv.status === 'Running' ? 'Tạm Dừng' : 'Mở Lại'}
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(srv.id)}
+                          className="text-white bg-rose-600 hover:bg-rose-700 font-bold text-sm px-4 py-2 rounded-lg transition-colors"
+                        >
+                          Xóa
+                        </button>
+                      </>
                     )}
                   </td>
                 </tr>
