@@ -10,7 +10,8 @@ export default async function AboutPage() {
   ];
 
   try {
-    const statRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023/api'}/public/stats`, { next: { revalidate: 60 } });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cloudservice-api-nhom7-gsfrhgerbbg3fmhf.indonesiacentral-01.azurewebsites.net/api';
+    const statRes = await fetch(`${apiUrl}/public/stats`, { next: { revalidate: 60 } });
     if (statRes.ok) {
       const data = await statRes.json();
       stats = [

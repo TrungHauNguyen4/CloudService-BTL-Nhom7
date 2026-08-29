@@ -10,7 +10,8 @@ export default async function PublicHomePage() {
   ];
 
   try {
-    const statRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023/api'}/public/stats`, { next: { revalidate: 60 } });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cloudservice-api-nhom7-gsfrhgerbbg3fmhf.indonesiacentral-01.azurewebsites.net/api';
+    const statRes = await fetch(`${apiUrl}/public/stats`, { next: { revalidate: 60 } });
     if (statRes.ok) {
       const data = await statRes.json();
       stats = [
@@ -26,7 +27,8 @@ export default async function PublicHomePage() {
 
   let categories = [];
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023/api'}/service-categories`, { next: { revalidate: 60 } });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cloudservice-api-nhom7-gsfrhgerbbg3fmhf.indonesiacentral-01.azurewebsites.net/api';
+    const res = await fetch(`${apiUrl}/service-categories`, { next: { revalidate: 60 } });
     if (res.ok) {
       categories = await res.json();
     }
@@ -36,7 +38,8 @@ export default async function PublicHomePage() {
 
   let topNews = [];
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023/api'}/public/news?page=1&pageSize=3`, { next: { revalidate: 60 } });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cloudservice-api-nhom7-gsfrhgerbbg3fmhf.indonesiacentral-01.azurewebsites.net/api';
+    const res = await fetch(`${apiUrl}/public/news?page=1&pageSize=3`, { next: { revalidate: 60 } });
     if (res.ok) {
       const data = await res.json();
       topNews = Array.isArray(data) ? data : (data.items || []);

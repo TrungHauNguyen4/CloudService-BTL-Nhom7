@@ -15,9 +15,10 @@ export default function PricingPage() {
   const [promoCode, setPromoCode] = useState<string | null>(null);
   
   useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cloudservice-api-nhom7-gsfrhgerbbg3fmhf.indonesiacentral-01.azurewebsites.net/api';
     Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023/api'}/service-plans`).then(res => res.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023/api'}/public/settings`).then(res => res.json())
+      fetch(`${apiUrl}/service-plans`).then(res => res.json()),
+      fetch(`${apiUrl}/public/settings`).then(res => res.json())
     ])
       .then(([plansData, settingsData]) => {
         const publicSettings = settingsData.settings || {};
@@ -272,7 +273,8 @@ function PlanQrCode({ planId }: { planId: string }) {
   const [qrBase64, setQrBase64] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023/api'}/service-plans/${planId}/qr`)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cloudservice-api-nhom7-gsfrhgerbbg3fmhf.indonesiacentral-01.azurewebsites.net/api';
+    fetch(`${apiUrl}/service-plans/${planId}/qr`)
       .then(res => res.json())
       .then(data => {
         if (data && data.qrImage) {
