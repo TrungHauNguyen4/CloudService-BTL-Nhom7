@@ -123,7 +123,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 AD
               </div>
               <div className="hidden sm:flex flex-col">
-                <span className="text-sm font-medium leading-none">{user?.fullName || 'Administrator'}</span>
+                <span className="text-sm font-medium leading-none">{user?.name || 'Administrator'}</span>
                 <span className="text-xs text-muted-foreground mt-1">{user?.role || 'Hệ thống'}</span>
               </div>
               <LogoutButton />
