@@ -10,7 +10,7 @@ export default async function AboutPage() {
   ];
 
   try {
-    const statRes = await fetch(`${process.env.API_URL || 'http://localhost:5023/api'}/public/stats`, { next: { revalidate: 60 } });
+    const statRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023/api'}/public/stats`, { next: { revalidate: 60 } });
     if (statRes.ok) {
       const data = await statRes.json();
       stats = [
