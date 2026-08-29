@@ -58,23 +58,9 @@ export default function AffiliatesPage() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Đối Tác Affiliate</h1>
           <p className="text-muted-foreground mt-2">Xét duyệt đơn đăng ký tham gia mạng lưới Affiliate.</p>
         </div>
-        <button className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 rounded-lg transition-colors font-medium">
-          <LinkIcon className="w-5 h-5" />
-          <span>Copy Link Đăng Ký</span>
-        </button>
       </div>
-
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="p-4 border-b border-border flex items-center bg-card">
-          <div className="flex-1 max-w-sm flex items-center bg-background rounded-lg px-4 py-2 border border-border focus-within:border-primary transition-colors">
-            <Search className="w-4 h-4 text-muted-foreground mr-2" />
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm đối tác..." 
-              className="bg-transparent border-none outline-none text-sm w-full text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
-        </div>
+
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">

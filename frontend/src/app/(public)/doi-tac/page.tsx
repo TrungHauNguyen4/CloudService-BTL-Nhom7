@@ -5,6 +5,7 @@ import { CheckCircle2, TrendingUp, Users, DollarSign, ArrowRight, Loader2, Link 
 import apiClient from "@/lib/axios";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
+import { decodeJWT } from '@/lib/jwt';
 
 export default function AffiliateLandingPage() {
   const router = useRouter();
@@ -25,17 +26,19 @@ export default function AffiliateLandingPage() {
     if (token) {
       setIsLoggedIn(true);
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const name = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || '';
-        const email = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] || '';
-        const id = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || null;
-        
-        setUserId(id);
-        setFormData(prev => ({
-          ...prev,
-          fullName: name,
-          email: email
-        }));
+        const payload = decodeJWT(token);
+        if (payload) {
+          const name = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || '';
+          const email = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] || '';
+          const id = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || null;
+          
+          setUserId(id);
+          setFormData(prev => ({
+            ...prev,
+            fullName: name,
+            email: email
+          }));
+        }
       } catch (e) {
         // ignore
       }

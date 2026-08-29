@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Cookies from 'js-cookie';
+import { decodeJWT } from '@/lib/jwt';
 import apiClient from '@/lib/axios';
 
 function CheckoutContent() {
@@ -155,7 +156,7 @@ function CheckoutContent() {
       let phone = 'Chưa cung cấp';
       
       if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const payload = decodeJWT(token);
         email = payload.email || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] || email;
         customerName = payload.name || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || customerName;
         customerId = payload.nameid || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];

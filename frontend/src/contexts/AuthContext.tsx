@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import { useRouter, usePathname } from 'next/navigation';
+import { decodeJWT } from '@/lib/jwt';
 
 export interface User {
   id: string;
@@ -32,9 +33,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const decodeToken = (token: string): User | null => {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      // Check expiration
+      const payload = decodeJWT(token);
+      if (!payload) return null;
       if (payload.exp && payload.exp * 1000 < Date.now()) {
         return null;
       }
@@ -44,9 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: payload.email || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"],
         role: payload.role || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "Customer"
       };
-    } catch (e) {
-      return null;
-    }
   };
 
   const checkAuth = () => {

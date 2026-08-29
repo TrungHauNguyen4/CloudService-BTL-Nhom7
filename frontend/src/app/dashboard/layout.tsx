@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
+import { decodeJWT } from '@/lib/jwt';
 import { LogOut } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -16,7 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const token = Cookies.get('token');
     if (token) {
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const payload = decodeJWT(token);
         const nameClaim = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
         if (nameClaim) {
           setUserName(nameClaim);

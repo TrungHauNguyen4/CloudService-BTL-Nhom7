@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Cookies from 'js-cookie';
+import { decodeJWT } from '@/lib/jwt';
 import apiClient from '@/lib/axios';
 import { Loader2 } from 'lucide-react';
 
@@ -43,7 +44,7 @@ function LoginContent() {
         contextLogin(response.data.token);
         
         try {
-          const payload = JSON.parse(atob(response.data.token.split('.')[1]));
+          const payload = decodeJWT(response.data.token);
           const role = payload["role"] || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
           
           if (role === 'Admin') {
