@@ -163,6 +163,39 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+
+    // --- SEED ADMIN VÀ CUSTOMER ACCOUNT ---
+    if (!db.AppUsers.Any(u => u.Email == "admin@cloudservice.com"))
+    {
+        var hashService = scope.ServiceProvider.GetRequiredService<PasswordHashService>();
+        db.AppUsers.Add(new CloudService.Domain.Entities.AppUser
+        {
+            Id = Guid.NewGuid(),
+            Username = "Admin",
+            FullName = "System Administrator",
+            Email = "admin@cloudservice.com",
+            PasswordHash = hashService.Hash("Admin@123"),
+            Role = CloudService.Domain.Enums.UserRole.Admin,
+            CreatedAt = DateTime.UtcNow
+        });
+    }
+
+    if (!db.AppUsers.Any(u => u.Email == "customer@gmail.com"))
+    {
+        var hashService = scope.ServiceProvider.GetRequiredService<PasswordHashService>();
+        db.AppUsers.Add(new CloudService.Domain.Entities.AppUser
+        {
+            Id = Guid.NewGuid(),
+            Username = "Customer",
+            FullName = "Khách Hàng Demo",
+            Email = "customer@gmail.com",
+            PasswordHash = hashService.Hash("Customer@123"),
+            Role = CloudService.Domain.Enums.UserRole.Customer,
+            CreatedAt = DateTime.UtcNow
+        });
+    }
+
+    db.SaveChanges();
 }
 
 if (app.Environment.IsDevelopment())
