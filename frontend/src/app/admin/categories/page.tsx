@@ -198,7 +198,7 @@ export default function CategoriesPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <div className="bg-card rounded-2xl max-w-md w-full shadow-lg border border-border overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-card rounded-2xl max-w-md w-full shadow-lg border border-border overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-muted/30">
               <h3 className="text-lg font-bold text-foreground">
                 {editingId ? "Cập Nhật Danh Mục" : "Thêm Danh Mục Mới"}

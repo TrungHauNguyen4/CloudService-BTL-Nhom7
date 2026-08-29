@@ -74,18 +74,32 @@ export default function PricingPage() {
   });
 
   const pricingPlans = filteredPlans.map((plan: any, index: number) => {
-    let cpu = '', ram = '', storage = '';
+    let highlights: { label: string, value: string }[] = [];
     let features: string[] = [];
     
     if (plan.specs) {
       if (plan.specs.includes(' / ')) {
         const parts = plan.specs.split(' / ');
-        cpu = parts[0] || '';
-        ram = parts[1] || '';
-        storage = parts[2] || '';
+        highlights = parts.slice(0, 3).map((p: string, i: number) => ({ label: ['CPU', 'RAM', 'Ổ cứng'][i], value: p }));
         features = ['Băng thông Không giới hạn', 'Hỗ trợ kỹ thuật 24/7', 'Tự động Backup'];
       } else {
-        features = plan.specs.split('\n').map((s: string) => s.trim()).filter(Boolean);
+        const parts = plan.specs.split('\n').map((s: string) => s.trim()).filter(Boolean);
+        const schema = plan.category?.specSchema || [];
+        
+        if (schema.length > 0) {
+          // Lấy 3 thông số đầu làm highlight, còn lại đưa vào danh sách features
+          highlights = parts.slice(0, 3).map((part: string, i: number) => ({ label: schema[i] || '', value: part }));
+          
+          features = parts.slice(3).map((part: string, i: number) => {
+             const label = schema[i + 3];
+             return label ? `${label}: ${part}` : part;
+          });
+          // Thêm các feature mặc định
+          features.push('Hỗ trợ kỹ thuật 24/7');
+        } else {
+          highlights = [];
+          features = parts;
+        }
       }
     } else {
       features = ['Dịch vụ tối ưu', 'Hỗ trợ kỹ thuật 24/7'];
@@ -101,9 +115,7 @@ export default function PricingPage() {
       price: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(basePrice),
       priceYear: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(discountedYearlyPrice),
       priceRaw: basePrice,
-      cpu,
-      ram,
-      storage,
+      highlights,
       features,
       isPopular: (maxCount > 0) ? (plan.id === popularPlanId) : (index === 1)
     };
@@ -209,11 +221,14 @@ export default function PricingPage() {
             </div>
 
             {/* Thông số cốt lõi */}
-            {(plan.cpu || plan.ram || plan.storage) && (
-              <div className="grid grid-cols-3 gap-2 mb-8 text-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                {plan.cpu && <div><p className="text-slate-900 font-bold">{plan.cpu}</p></div>}
-                {plan.ram && <div className="border-x border-slate-200"><p className="text-slate-900 font-bold">{plan.ram}</p></div>}
-                {plan.storage && <div><p className="text-slate-900 font-bold">{plan.storage}</p></div>}
+            {plan.highlights.length > 0 && (
+              <div className={`grid grid-cols-${plan.highlights.length} gap-2 mb-8 text-center bg-slate-50 p-4 rounded-2xl border border-slate-100`}>
+                {plan.highlights.map((h: any, i: number) => (
+                  <div key={i} className={i > 0 ? "border-l border-slate-200" : ""}>
+                    {h.label && <p className="text-[11px] text-slate-500 uppercase tracking-wider mb-1">{h.label}</p>}
+                    <p className="text-slate-900 font-bold">{h.value}</p>
+                  </div>
+                ))}
               </div>
             )}
 

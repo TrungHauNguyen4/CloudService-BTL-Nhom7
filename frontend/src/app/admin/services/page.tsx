@@ -78,30 +78,46 @@ export default function ServicesPage() {
   };
 
   const handleAddNew = () => {
+    const defaultCat = categories.length > 0 ? categories[0].id : "";
     setFormData({
       name: "",
-      categoryId: categories.length > 0 ? categories[0].id : "",
+      categoryId: defaultCat,
       monthlyPrice: 0,
       isActive: true
     });
-    setSpecItems(["", "", "", ""]);
+    
+    // Setup initial spec schema for default category
+    const cat = categories.find(c => c.id === defaultCat);
+    const schema = cat?.specSchema || [];
+    setSpecItems(schema.length > 0 ? Array(schema.length).fill("") : [""]);
+    
     setEditingId(null);
     setShowModal(true);
   };
 
   const handleEdit = (service: any) => {
+    const catId = service.categoryId || (service.category?.id) || "";
     setFormData({
       name: service.name,
-      categoryId: service.categoryId || (service.category?.id) || "",
+      categoryId: catId,
       monthlyPrice: service.monthlyPrice,
       isActive: service.isActive
     });
     
+    // Find category schema
+    const cat = categories.find(c => c.id === catId);
+    const schema = cat?.specSchema || [];
+    
     // Convert specs string back to array
     const specsString = service.specs || "";
-    const parts = specsString.split(/[\n]|\s\/\s/).map((s: string) => s.trim()).filter(Boolean);
-    while (parts.length < 4) parts.push("");
-    setSpecItems(parts.slice(0, 4));
+    const parts = specsString.split(/[\n]/).map((s: string) => s.trim()).filter(Boolean);
+    
+    if (schema.length > 0) {
+      while (parts.length < schema.length) parts.push("");
+      setSpecItems(parts.slice(0, schema.length));
+    } else {
+      setSpecItems(parts);
+    }
     
     setEditingId(service.id);
     setShowModal(true);
@@ -113,7 +129,8 @@ export default function ServicesPage() {
     setSpecItems(newSpecs);
   };
 
-  // Removed addSpec and removeSpec as the form is now fixed to 4 fields
+  const addSpecItem = () => setSpecItems([...specItems, ""]);
+  const removeSpecItem = (index: number) => setSpecItems(specItems.filter((_, i) => i !== index));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -292,7 +309,14 @@ export default function ServicesPage() {
                   <select 
                     required
                     value={formData.categoryId}
-                    onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
+                    onChange={(e) => {
+                      const newCatId = e.target.value;
+                      setFormData({...formData, categoryId: newCatId});
+                      // Reset specs based on new category
+                      const cat = categories.find(c => c.id === newCatId);
+                      const schema = cat?.specSchema || [];
+                      setSpecItems(schema.length > 0 ? Array(schema.length).fill("") : [""]);
+                    }}
                     className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="" disabled>-- Chọn danh mục --</option>
@@ -328,50 +352,57 @@ export default function ServicesPage() {
                 </div>
               </div>
 
-              {/* Thông số kỹ thuật - Fixed 4 Fields */}
+              {/* Thông số kỹ thuật */}
               <div>
-                <label className="block text-sm font-medium mb-2">Thông số kỹ thuật (Mặc định)</label>
+                <label className="block text-sm font-medium mb-2">Thông số kỹ thuật</label>
                 <div className="space-y-3 bg-muted/5 p-4 rounded-lg border border-border">
-                  <div className="flex items-center gap-4">
-                    <label className="w-1/3 text-sm font-medium text-muted-foreground text-right">CPU (vCore)</label>
-                    <input 
-                      type="text"
-                      value={specItems[0] || ""}
-                      onChange={(e) => handleSpecChange(0, e.target.value)}
-                      className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-background"
-                      placeholder="VD: 2 vCore"
-                    />
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <label className="w-1/3 text-sm font-medium text-muted-foreground text-right">RAM (GB)</label>
-                    <input 
-                      type="text"
-                      value={specItems[1] || ""}
-                      onChange={(e) => handleSpecChange(1, e.target.value)}
-                      className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-background"
-                      placeholder="VD: 4 GB"
-                    />
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <label className="w-1/3 text-sm font-medium text-muted-foreground text-right">Ổ cứng (Disk)</label>
-                    <input 
-                      type="text"
-                      value={specItems[2] || ""}
-                      onChange={(e) => handleSpecChange(2, e.target.value)}
-                      className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-background"
-                      placeholder="VD: 50 GB NVMe"
-                    />
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <label className="w-1/3 text-sm font-medium text-muted-foreground text-right">Băng thông (Bandwidth)</label>
-                    <input 
-                      type="text"
-                      value={specItems[3] || ""}
-                      onChange={(e) => handleSpecChange(3, e.target.value)}
-                      className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-background"
-                      placeholder="VD: Không giới hạn"
-                    />
-                  </div>
+                  {(() => {
+                    const cat = categories.find(c => c.id === formData.categoryId);
+                    const schema = cat?.specSchema || [];
+                    const isDynamic = schema.length > 0;
+                    
+                    return (
+                      <>
+                        {specItems.map((spec, index) => (
+                          <div key={index} className="flex items-center gap-4">
+                            <label className="w-1/3 text-sm font-medium text-muted-foreground text-right truncate">
+                              {isDynamic ? schema[index] || `Trường ${index + 1}` : `Thông số ${index + 1}`}
+                            </label>
+                            <div className="flex-1 flex gap-2">
+                              <input 
+                                type="text"
+                                value={spec}
+                                onChange={(e) => handleSpecChange(index, e.target.value)}
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-background"
+                                placeholder={isDynamic ? `Nhập ${schema[index] || 'giá trị'}` : "VD: 1 vCore..."}
+                              />
+                              {!isDynamic && (
+                                <button 
+                                  type="button"
+                                  onClick={() => removeSpecItem(index)}
+                                  className="shrink-0 p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {!isDynamic && (
+                          <div className="pt-2 flex justify-end">
+                            <button 
+                              type="button"
+                              onClick={addSpecItem}
+                              className="text-xs bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md font-medium flex items-center gap-1 transition-colors"
+                            >
+                              <Plus className="w-4 h-4" /> Thêm thông số
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
