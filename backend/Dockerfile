@@ -22,6 +22,7 @@ RUN dotnet publish "CloudService.WebApi.csproj" -c Release -o /app/publish /p:Us
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+ENV ASPNETCORE_HTTP_PORTS=80
 
 # Khai báo cổng 80 cho container
 EXPOSE 80 
