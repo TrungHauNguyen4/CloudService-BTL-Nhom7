@@ -59,9 +59,11 @@ export default function AdminCustomersPage() {
                     </td>
                     <td className="p-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-                        user.role === 1 ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                        user.role === 1 ? 'bg-purple-100 text-purple-700' :
+                        user.role === 2 ? 'bg-green-100 text-green-700' :
+                        'bg-blue-100 text-blue-700'
                       }`}>
-                        {user.role === 1 ? 'Admin' : user.role === 2 ? 'Editor' : 'Customer'}
+                        {user.role === 1 ? 'Admin' : user.role === 2 ? 'Editor' : 'Khách hàng'}
                       </span>
                     </td>
                   </tr>
