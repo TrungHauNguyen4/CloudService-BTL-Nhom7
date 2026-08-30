@@ -12,7 +12,7 @@ export default function AdminAccountsPage() {
   // Edit State
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
-  const [role, setRole] = useState(0);
+  const [role, setRole] = useState(3); // Default: Customer = 3
   const [newPassword, setNewPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -144,9 +144,11 @@ export default function AdminAccountsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-                        user.role === 1 ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                        user.role === 1 ? 'bg-purple-100 text-purple-700' :
+                        user.role === 2 ? 'bg-green-100 text-green-700' :
+                        'bg-blue-100 text-blue-700'
                       }`}>
-                        {user.role === 1 ? 'Admin' : 'Khách hàng'}
+                        {user.role === 1 ? 'Admin' : user.role === 2 ? 'Editor' : 'Khách hàng'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -195,8 +197,9 @@ export default function AdminAccountsPage() {
                     onChange={(e) => setRole(parseInt(e.target.value))}
                     className="w-full pl-9 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-slate-900"
                   >
-                    <option value={0}>Khách Hàng</option>
+                    <option value={3}>Khách Hàng</option>
                     <option value={1}>Admin</option>
+                    <option value={2}>Editor</option>
                   </select>
                 </div>
               </div>
