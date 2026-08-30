@@ -27,6 +27,8 @@ function LoginContent() {
     if (user) {
       if (user.role === 'Admin') {
         router.push(redirectUrl || '/admin/dashboard');
+      } else if (user.role === 'Editor') {
+        router.push(redirectUrl || '/admin/orders');
       } else {
         router.push(redirectUrl || '/dashboard');
       }
@@ -49,6 +51,8 @@ function LoginContent() {
           
           if (role === 'Admin') {
             router.push(redirectUrl || '/admin/dashboard');
+          } else if (role === 'Editor') {
+            router.push(redirectUrl || '/admin/orders');
           } else {
             router.push(redirectUrl || '/dashboard');
           }
